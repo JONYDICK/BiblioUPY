@@ -15,35 +15,35 @@
   --font-display: 'Poppins', sans-serif;
   --font-body: 'Roboto', sans-serif;
 
-  --background: 273 69% 16%;
+  --background: 260 69% 6%;
   --foreground: 0 0% 100%;
 
-  --card: 271 49% 41%;
+  --card: 260 50% 12%;
   --card-foreground: 0 0% 100%;
 
-  --popover: 273 69% 16%;
+  --popover: 260 50% 10%;
   --popover-foreground: 0 0% 100%;
 
-  --primary: 51 100% 50%;
-  --primary-foreground: 273 69% 16%;
+  --primary: 45 100% 50%;
+  --primary-foreground: 260 69% 10%;
 
-  --secondary: 271 49% 50%; /* Slightly lighter than card for variety */
+  --secondary: 268 49% 41%;
   --secondary-foreground: 0 0% 100%;
 
-  --muted: 271 30% 30%;
-  --muted-foreground: 271 20% 80%;
+  --muted: 260 20% 12%;
+  --muted-foreground: 260 10% 60%;
 
-  --accent: 51 100% 50%;
-  --accent-foreground: 273 69% 16%;
+  --accent: 268 49% 41%;
+  --accent-foreground: 0 0% 100%;
 
-  --destructive: 0 62.8% 30.6%;
+  --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
 
-  --border: 271 49% 30%;
-  --input: 271 49% 30%;
-  --ring: 51 100% 50%;
+  --border: 260 30% 15%;
+  --input: 260 30% 15%;
+  --ring: 45 100% 50%;
 
-  --radius: 0.75rem;
+  --radius: 0.5rem;
 }
 
 @layer base {

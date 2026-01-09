@@ -22,14 +22,15 @@ export function Header() {
         <div className="flex justify-between items-center h-20">
           
           {/* Logo Area */}
-          <div className="flex-shrink-0 flex items-center gap-3">
-            <Link href="/" className="group flex items-center gap-3 cursor-pointer">
-              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300">
+          <div className="flex-shrink-0 flex items-center gap-4">
+            <Link href="/" className="group flex items-center gap-4 cursor-pointer">
+              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-300">
                 <span className="font-display font-bold text-background text-lg">UPY</span>
               </div>
-              <span className="font-display font-bold text-xl tracking-wide hidden sm:block">
-                Biblio<span className="text-primary">UPY</span>
-              </span>
+              <div className="hidden sm:block">
+                <span className="block font-display font-bold text-white tracking-tight leading-none text-lg uppercase">BiblioUPY</span>
+                <span className="block text-[9px] text-white/30 uppercase tracking-[0.3em] mt-1 font-bold">Portal Institucional</span>
+              </div>
             </Link>
           </div>
 

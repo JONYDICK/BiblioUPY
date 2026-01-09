@@ -77,79 +77,122 @@ export default function Home() {
       </section>
 
       {/* RESOURCES SECTION */}
-      <section className="py-20 bg-black/20 backdrop-blur-sm border-t border-white/5">
+      <section className="py-20 bg-background border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-12 gap-8">
-            <div>
-              <h2 className="font-display font-bold text-3xl md:text-4xl text-white mb-2">
-                {t("resources_title")}
-              </h2>
-              <div className="h-1 w-20 bg-primary rounded-full" />
-            </div>
+          <div className="flex flex-col md:flex-row gap-12">
+            
+            {/* LEFT SIDEBAR FILTERS */}
+            <aside className="w-full md:w-64 flex-shrink-0">
+              <div className="sticky top-24 space-y-8">
+                <div>
+                  <h2 className="font-display font-bold text-2xl text-white mb-6 flex items-center gap-2">
+                    <Filter className="w-5 h-5 text-primary" />
+                    {t("nav_library")}
+                  </h2>
+                  <div className="h-1 w-12 bg-primary rounded-full mb-8" />
+                </div>
 
-            <div className="flex flex-wrap items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10">
-              <div className="flex items-center gap-2 text-white/40 text-sm font-medium mr-2">
-                <Filter className="w-4 h-4" />
-                <span>{t("filter_all")}:</span>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                <Select value={careerFilter} onValueChange={setCareerFilter}>
-                  <SelectTrigger className="w-full sm:w-[200px] bg-background/50 border-white/10 text-white">
-                    <SelectValue placeholder={t("filter_career")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("career_all")}</SelectItem>
-                    <SelectItem value="cybersecurity">{t("career_cybersecurity")}</SelectItem>
-                    <SelectItem value="robotics">{t("career_robotics")}</SelectItem>
-                    <SelectItem value="data">{t("career_data")}</SelectItem>
-                    <SelectItem value="embedded">{t("career_embedded")}</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* Career Filter */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-white/40 uppercase tracking-widest px-2">
+                    {t("filter_career")}
+                  </h3>
+                  <div className="flex flex-col gap-1">
+                    {[
+                      { id: "all", label: t("career_all") },
+                      { id: "cybersecurity", label: t("career_cybersecurity") },
+                      { id: "robotics", label: t("career_robotics") },
+                      { id: "data", label: t("career_data") },
+                      { id: "embedded", label: t("career_embedded") }
+                    ].map((opt) => (
+                      <button
+                        key={opt.id}
+                        onClick={() => setCareerFilter(opt.id)}
+                        className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium ${
+                          careerFilter === opt.id 
+                            ? "bg-primary text-background shadow-lg shadow-primary/20" 
+                            : "text-white/60 hover:bg-white/5 hover:text-white"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-                <Select value={purposeFilter} onValueChange={setPurposeFilter}>
-                  <SelectTrigger className="w-full sm:w-[200px] bg-background/50 border-white/10 text-white">
-                    <SelectValue placeholder={t("filter_purpose")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("purpose_all")}</SelectItem>
-                    <SelectItem value="research">{t("purpose_research")}</SelectItem>
-                    <SelectItem value="textbook">{t("purpose_textbook")}</SelectItem>
-                    <SelectItem value="reference">{t("purpose_reference")}</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* Purpose Filter */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-white/40 uppercase tracking-widest px-2">
+                    {t("filter_purpose")}
+                  </h3>
+                  <div className="flex flex-col gap-1">
+                    {[
+                      { id: "all", label: t("purpose_all") },
+                      { id: "research", label: t("purpose_research") },
+                      { id: "textbook", label: t("purpose_textbook") },
+                      { id: "reference", label: t("purpose_reference") }
+                    ].map((opt) => (
+                      <button
+                        key={opt.id}
+                        onClick={() => setPurposeFilter(opt.id)}
+                        className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium ${
+                          purposeFilter === opt.id 
+                            ? "bg-primary text-background shadow-lg shadow-primary/20" 
+                            : "text-white/60 hover:bg-white/5 hover:text-white"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {(careerFilter !== "all" || purposeFilter !== "all") && (
+                  <button 
+                    onClick={() => {setCareerFilter("all"); setPurposeFilter("all")}}
+                    className="w-full py-3 rounded-xl border border-white/10 text-white/40 text-sm hover:text-white hover:border-white/20 transition-all"
+                  >
+                    Clear Filters
+                  </button>
+                )}
               </div>
+            </aside>
+
+            {/* MAIN CONTENT AREA */}
+            <div className="flex-1">
+              <div className="mb-8 flex justify-between items-center">
+                <p className="text-white/40 text-sm">
+                  Showing <span className="text-white font-bold">{filteredResources.length}</span> resources
+                </p>
+              </div>
+
+              {isLoading ? (
+                <div className="flex justify-center items-center py-20">
+                  <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                  <span className="ml-3 text-white/50">{t("resources_loading")}</span>
+                </div>
+              ) : error ? (
+                <div className="text-center py-20 bg-red-500/10 rounded-2xl border border-red-500/20">
+                  <p className="text-red-300">Error loading resources. Please try again later.</p>
+                </div>
+              ) : filteredResources.length === 0 ? (
+                <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/5 border-dashed">
+                  <p className="text-white/40 text-lg">{t("resources_empty")}</p>
+                </div>
+              ) : (
+                <motion.div 
+                  layout
+                  className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+                >
+                  <AnimatePresence mode="popLayout">
+                    {filteredResources.map((resource, index) => (
+                      <ResourceCard key={resource.id} resource={resource} index={index} />
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
+              )}
             </div>
           </div>
-
-          {isLoading ? (
-            <div className="flex justify-center items-center py-20">
-              <Loader2 className="w-10 h-10 text-primary animate-spin" />
-              <span className="ml-3 text-white/50">{t("resources_loading")}</span>
-            </div>
-          ) : error ? (
-            <div className="text-center py-20 bg-red-500/10 rounded-2xl border border-red-500/20">
-              <p className="text-red-300">Error loading resources. Please try again later.</p>
-            </div>
-          ) : filteredResources.length === 0 ? (
-            <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/5 border-dashed">
-              <p className="text-white/40 text-lg">{t("resources_empty")}</p>
-              <button onClick={() => {setCareerFilter("all"); setPurposeFilter("all")}} className="text-primary hover:underline mt-2 inline-block">
-                Clear all filters
-              </button>
-            </div>
-          ) : (
-            <motion.div 
-              layout
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-            >
-              <AnimatePresence mode="popLayout">
-                {filteredResources.map((resource, index) => (
-                  <ResourceCard key={resource.id} resource={resource} index={index} />
-                ))}
-              </AnimatePresence>
-            </motion.div>
-          )}
         </div>
       </section>
 

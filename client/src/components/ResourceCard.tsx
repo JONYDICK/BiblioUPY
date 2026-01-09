@@ -34,31 +34,31 @@ export function ResourceCard({ resource, index }: ResourceCardProps) {
     >
       <div className="absolute inset-0 bg-gradient-to-br from-secondary/50 to-transparent rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       
-      <div className="relative h-full bg-[#3a1d5c] border border-white/5 rounded-2xl p-6 hover:border-primary/50 transition-colors duration-300 flex flex-col shadow-xl">
-        <div className="flex justify-between items-start mb-4">
-          <div className={`p-3 rounded-xl ${getBadgeColor(resource.type)} border`}>
+      <div className="relative h-full bg-white/[0.02] border border-white/10 rounded-2xl p-6 hover:border-primary hover:bg-white/[0.04] transition-all duration-300 flex flex-col shadow-sm">
+        <div className="flex justify-between items-start mb-6">
+          <div className={`p-3 rounded-xl ${getBadgeColor(resource.type)} border shadow-inner`}>
             {getIcon(resource.type)}
           </div>
-          <span className="text-xs font-mono text-white/40 uppercase tracking-widest">{resource.type}</span>
+          <div className="text-right">
+            <span className="block text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] mb-1">{resource.type}</span>
+            <span className="block text-xs font-medium text-primary/80">{resource.purpose}</span>
+          </div>
         </div>
 
-        <h3 className="font-display font-bold text-xl text-white mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 className="font-display font-bold text-lg text-white mb-3 line-clamp-2 leading-snug">
           {resource.title}
         </h3>
         
-        <p className="text-white/60 text-sm mb-4 flex-grow line-clamp-3">
+        <p className="text-white/50 text-sm mb-6 flex-grow line-clamp-3 leading-relaxed">
           {resource.description}
         </p>
 
-        <div className="flex flex-wrap gap-2 mb-6">
-          <span className="px-2 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] text-white/50 uppercase tracking-tight">
+        <div className="flex flex-wrap gap-2 mb-8">
+          <span className="px-2.5 py-1 rounded-md bg-primary/5 border border-primary/10 text-[10px] text-primary/70 font-bold uppercase tracking-wider">
             {resource.career}
           </span>
-          <span className="px-2 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] text-white/50 uppercase tracking-tight">
+          <span className="px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] text-white/30 font-bold uppercase tracking-wider">
             {resource.topic}
-          </span>
-          <span className="px-2 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] text-white/50 uppercase tracking-tight">
-            {resource.purpose}
           </span>
         </div>
 
@@ -66,9 +66,9 @@ export function ResourceCard({ resource, index }: ResourceCardProps) {
           href={resource.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center w-full py-3 rounded-xl bg-white/5 hover:bg-primary hover:text-background text-sm font-bold border border-white/10 hover:border-primary transition-all duration-300 group-hover:shadow-lg group-hover:shadow-primary/25"
+          className="inline-flex items-center justify-center w-full py-3 rounded-xl bg-transparent hover:bg-primary text-white hover:text-background text-sm font-bold border border-white/10 hover:border-primary transition-all duration-300"
         >
-          View Resource
+          Access Resource
         </a>
       </div>
     </motion.div>
