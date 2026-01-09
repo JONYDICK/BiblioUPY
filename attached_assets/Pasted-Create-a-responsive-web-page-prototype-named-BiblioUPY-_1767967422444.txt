@@ -1,0 +1,41 @@
+Create a responsive web page prototype named "BiblioUPY" for the Universidad Politécnica de Yucatán (UPY) with these requirements:
+
+Page Title: Browser tab must show <title>BiblioUPY</title>
+Languages: Fully bilingual (Spanish/English). Include a language toggle button (ES/EN) in the top-right corner.
+Color Palette:
+Primary: Dark Purple (#2E0D47) for backgrounds
+Secondary: Light Purple (#6A359C) for accents
+Highlight: Vibrant Yellow (#FFD700) for buttons/CTAs
+Neutral: White (#FFFFFF) for text/light sections
+Header:
+UPY logo placeholder (circular dark purple badge with white "UPY" text)
+Navigation menu: Home, Library, Upload Resource, Contact (translatable)
+Language toggle button (ES/EN)
+Hero Section:
+Particle-effect background (simplified gradient fallback: dark purple to lighter purple)
+Main headline: "UPY ENGINEERS WANTED" (EN) / "INGENIEROS UPY BUSCADOS" (ES)
+Subheading: "Join the Industry 5.0" (EN) / "Sé parte de la Industria 5.0" (ES)
+Yellow rounded CTA button: "JOIN THE FUTURE" (EN) / "UNIRME AL FUTURO" (ES)
+Resources Section (Prototype):
+Section title: "Academic Resources" (EN) / "Recursos Académicos" (ES)
+3 placeholder cards with icons (book/document/PDF) and generic titles
+Footer:
+Copyright notice: "© 2026 Universidad Politécnica de Yucatán"
+Quick links (About, Privacy Policy) and social media icons (placeholders)
+Design Requirements:
+Modern typography (Google Fonts: Poppins for headings, Roboto for body)
+Clean UI with soft shadows, rounded corners (buttons/cards: 12px radius)
+Fully responsive (mobile/desktop layouts)
+Interactivity:
+Language toggle instantly switches all text content
+Button hover effects (scale to 1.05 + slight shadow lift)
+Smooth scroll navigation
+Technical Constraints:
+
+Use only vanilla HTML/CSS/JavaScript (no frameworks/libraries)
+Single HTML file with embedded CSS/JS (for Replit simplicity)
+Prioritize visual fidelity to UPY branding over complex animations
+Include CSS variables for the color scheme for easy theming
+Critical Detail:
+The browser tab title MUST display exactly: "BiblioUPY"
+(Implement via <title>BiblioUPY</title> in HTML head)
