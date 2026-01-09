@@ -1,13 +1,27 @@
 import { useLanguage } from "@/lib/i18n";
 import { useResources } from "@/hooks/use-resources";
 import { ResourceCard } from "@/components/ResourceCard";
-import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, Sparkles, Loader2, Filter } from "lucide-react";
 import { Link } from "wouter";
+import { useState, useMemo } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Home() {
   const { t } = useLanguage();
   const { data: resources, isLoading, error } = useResources();
+
+  const [careerFilter, setCareerFilter] = useState("all");
+  const [purposeFilter, setPurposeFilter] = useState("all");
+
+  const filteredResources = useMemo(() => {
+    if (!resources) return [];
+    return resources.filter(r => {
+      const matchCareer = careerFilter === "all" || r.career.toLowerCase().includes(careerFilter.toLowerCase());
+      const matchPurpose = purposeFilter === "all" || r.purpose.toLowerCase().includes(purposeFilter.toLowerCase());
+      return matchCareer && matchPurpose;
+    });
+  }, [resources, careerFilter, purposeFilter]);
 
   return (
     <main className="min-h-screen">
@@ -65,14 +79,46 @@ export default function Home() {
       {/* RESOURCES SECTION */}
       <section className="py-20 bg-black/20 backdrop-blur-sm border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-12 gap-8">
             <div>
               <h2 className="font-display font-bold text-3xl md:text-4xl text-white mb-2">
                 {t("resources_title")}
               </h2>
               <div className="h-1 w-20 bg-primary rounded-full" />
             </div>
-            {/* Can add filter controls here later */}
+
+            <div className="flex flex-wrap items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10">
+              <div className="flex items-center gap-2 text-white/40 text-sm font-medium mr-2">
+                <Filter className="w-4 h-4" />
+                <span>{t("filter_all")}:</span>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                <Select value={careerFilter} onValueChange={setCareerFilter}>
+                  <SelectTrigger className="w-full sm:w-[200px] bg-background/50 border-white/10 text-white">
+                    <SelectValue placeholder={t("filter_career")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("career_all")}</SelectItem>
+                    <SelectItem value="industrial">{t("career_industrial")}</SelectItem>
+                    <SelectItem value="mechatronics">{t("career_mechatronics")}</SelectItem>
+                    <SelectItem value="data science">{t("career_data_science")}</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={purposeFilter} onValueChange={setPurposeFilter}>
+                  <SelectTrigger className="w-full sm:w-[200px] bg-background/50 border-white/10 text-white">
+                    <SelectValue placeholder={t("filter_purpose")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("purpose_all")}</SelectItem>
+                    <SelectItem value="research">{t("purpose_research")}</SelectItem>
+                    <SelectItem value="textbook">{t("purpose_textbook")}</SelectItem>
+                    <SelectItem value="reference">{t("purpose_reference")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
 
           {isLoading ? (
@@ -84,19 +130,24 @@ export default function Home() {
             <div className="text-center py-20 bg-red-500/10 rounded-2xl border border-red-500/20">
               <p className="text-red-300">Error loading resources. Please try again later.</p>
             </div>
-          ) : resources?.length === 0 ? (
+          ) : filteredResources.length === 0 ? (
             <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/5 border-dashed">
               <p className="text-white/40 text-lg">{t("resources_empty")}</p>
-              <Link href="/upload" className="text-primary hover:underline mt-2 inline-block">
-                Be the first to upload one!
-              </Link>
+              <button onClick={() => {setCareerFilter("all"); setPurposeFilter("all")}} className="text-primary hover:underline mt-2 inline-block">
+                Clear all filters
+              </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {resources?.map((resource, index) => (
-                <ResourceCard key={resource.id} resource={resource} index={index} />
-              ))}
-            </div>
+            <motion.div 
+              layout
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            >
+              <AnimatePresence mode="popLayout">
+                {filteredResources.map((resource, index) => (
+                  <ResourceCard key={resource.id} resource={resource} index={index} />
+                ))}
+              </AnimatePresence>
+            </motion.div>
           )}
         </div>
       </section>

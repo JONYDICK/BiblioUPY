@@ -36,9 +36,32 @@ const translations: Translations = {
   form_type: { en: "Type", es: "Tipo" },
   form_description: { en: "Description", es: "Descripción" },
   form_link: { en: "Link URL", es: "Enlace URL" },
+  form_topic: { en: "Topic", es: "Tema" },
+  form_theme: { en: "Theme", es: "Trama" },
+  form_purpose: { en: "Purpose", es: "Propósito" },
+  form_career: { en: "Career", es: "Carrera" },
   form_submit: { en: "Create Resource", es: "Crear Recurso" },
   form_cancel: { en: "Cancel", es: "Cancelar" },
   form_success: { en: "Resource created successfully!", es: "¡Recurso creado con éxito!" },
+
+  // Filters
+  filter_all: { en: "All Resources", es: "Todos los Recursos" },
+  filter_career: { en: "Career", es: "Carrera" },
+  filter_topic: { en: "Topic", es: "Tema" },
+  filter_purpose: { en: "Purpose", es: "Propósito" },
+  filter_theme: { en: "Theme", es: "Trama" },
+
+  // Careers
+  career_all: { en: "All Careers", es: "Todas las Carreras" },
+  career_industrial: { en: "Industrial Engineering", es: "Ingeniería Industrial" },
+  career_mechatronics: { en: "Mechatronics", es: "Mecatrónica" },
+  career_data_science: { en: "Data Science", es: "Ciencia de Datos" },
+
+  // Purposes
+  purpose_all: { en: "All Purposes", es: "Todos los Propósitos" },
+  purpose_research: { en: "Research", es: "Investigación" },
+  purpose_textbook: { en: "Textbook", es: "Libro de Texto" },
+  purpose_reference: { en: "Reference", es: "Referencia" },
 
   // Footer
   footer_rights: { en: "All rights reserved", es: "Todos los derechos reservados" },

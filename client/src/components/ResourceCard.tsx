@@ -46,9 +46,21 @@ export function ResourceCard({ resource, index }: ResourceCardProps) {
           {resource.title}
         </h3>
         
-        <p className="text-white/60 text-sm mb-6 flex-grow line-clamp-3">
+        <p className="text-white/60 text-sm mb-4 flex-grow line-clamp-3">
           {resource.description}
         </p>
+
+        <div className="flex flex-wrap gap-2 mb-6">
+          <span className="px-2 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] text-white/50 uppercase tracking-tight">
+            {resource.career}
+          </span>
+          <span className="px-2 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] text-white/50 uppercase tracking-tight">
+            {resource.topic}
+          </span>
+          <span className="px-2 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] text-white/50 uppercase tracking-tight">
+            {resource.purpose}
+          </span>
+        </div>
 
         <a 
           href={resource.link}
