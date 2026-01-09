@@ -38,34 +38,44 @@ async function seedDatabase() {
   const existing = await storage.getResources();
   if (existing.length === 0) {
     await storage.createResource({ 
-      title: "Introduction to Industry 5.0", 
+      title: "Network Security Fundamentals", 
       type: "pdf", 
-      description: "Fundamental concepts of the new industrial revolution.", 
+      description: "Basic concepts of network protection and encryption.", 
       link: "#",
-      topic: "Industry 5.0",
-      theme: "Cyber-Physical Systems",
+      topic: "Cybersecurity",
+      theme: "Security",
       purpose: "Reference",
-      career: "Industrial Engineering"
+      career: "Cybersecurity"
     });
     await storage.createResource({ 
-      title: "Advanced Robotics", 
+      title: "Advanced Robotics Systems", 
       type: "book", 
-      description: "Textbook for Mechatronics Engineering.", 
+      description: "Comprehensive guide to robotic kinematics and control.", 
       link: "#",
       topic: "Robotics",
       theme: "Automation",
       purpose: "Textbook",
-      career: "Mechatronics"
+      career: "Robotics"
     });
     await storage.createResource({ 
-      title: "Data Science Algorithms", 
+      title: "Data Analytics with Python", 
       type: "document", 
-      description: "Cheat sheet for common algorithms.", 
+      description: "Techniques for data processing and visualization.", 
       link: "#",
-      topic: "Data Science",
-      theme: "Machine Learning",
+      topic: "Data",
+      theme: "Analysis",
       purpose: "Research",
-      career: "Data Science"
+      career: "Data"
+    });
+    await storage.createResource({ 
+      title: "RTOS Implementation", 
+      type: "pdf", 
+      description: "Real-time operating systems for embedded hardware.", 
+      link: "#",
+      topic: "Embedded Systems",
+      theme: "Firmware",
+      purpose: "Technical",
+      career: "Embedded Systems"
     });
   }
 }

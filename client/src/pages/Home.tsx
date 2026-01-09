@@ -100,9 +100,10 @@ export default function Home() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t("career_all")}</SelectItem>
-                    <SelectItem value="industrial">{t("career_industrial")}</SelectItem>
-                    <SelectItem value="mechatronics">{t("career_mechatronics")}</SelectItem>
-                    <SelectItem value="data science">{t("career_data_science")}</SelectItem>
+                    <SelectItem value="cybersecurity">{t("career_cybersecurity")}</SelectItem>
+                    <SelectItem value="robotics">{t("career_robotics")}</SelectItem>
+                    <SelectItem value="data">{t("career_data")}</SelectItem>
+                    <SelectItem value="embedded">{t("career_embedded")}</SelectItem>
                   </SelectContent>
                 </Select>
 

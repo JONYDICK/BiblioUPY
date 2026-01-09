@@ -53,9 +53,10 @@ const translations: Translations = {
 
   // Careers
   career_all: { en: "All Careers", es: "Todas las Carreras" },
-  career_industrial: { en: "Industrial Engineering", es: "Ingeniería Industrial" },
-  career_mechatronics: { en: "Mechatronics", es: "Mecatrónica" },
-  career_data_science: { en: "Data Science", es: "Ciencia de Datos" },
+  career_cybersecurity: { en: "Cybersecurity", es: "Ciberseguridad" },
+  career_robotics: { en: "Robotics", es: "Robótica" },
+  career_data: { en: "Data", es: "Datos" },
+  career_embedded: { en: "Embedded Systems", es: "Sistemas Embebidos" },
 
   // Purposes
   purpose_all: { en: "All Purposes", es: "Todos los Propósitos" },

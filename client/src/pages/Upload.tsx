@@ -25,6 +25,10 @@ export default function Upload() {
       type: "document",
       description: "",
       link: "",
+      topic: "General",
+      theme: "General",
+      purpose: "Reference",
+      career: "Cybersecurity",
     },
   });
 
@@ -44,6 +48,19 @@ export default function Upload() {
       });
     }
   };
+
+  const careers = [
+    { id: 'cybersecurity', label: t("career_cybersecurity"), value: "Cybersecurity" },
+    { id: 'robotics', label: t("career_robotics"), value: "Robotics" },
+    { id: 'data', label: t("career_data"), value: "Data" },
+    { id: 'embedded', label: t("career_embedded"), value: "Embedded Systems" },
+  ];
+
+  const purposes = [
+    { id: 'research', label: t("purpose_research"), value: "Research" },
+    { id: 'textbook', label: t("purpose_textbook"), value: "Textbook" },
+    { id: 'reference', label: t("purpose_reference"), value: "Reference" },
+  ];
 
   return (
     <main className="min-h-screen pt-32 pb-20 px-4 sm:px-6">
@@ -86,6 +103,58 @@ export default function Upload() {
                 {form.formState.errors.title && (
                   <p className="text-sm text-red-400">{form.formState.errors.title.message}</p>
                 )}
+              </div>
+
+              {/* Career Select */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/80">{t("form_career")}</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {careers.map((career) => (
+                    <label 
+                      key={career.id}
+                      className={`
+                        cursor-pointer text-center py-3 rounded-xl border transition-all font-medium text-sm
+                        ${form.watch('career') === career.value 
+                          ? 'bg-primary text-background border-primary shadow-[0_0_15px_-3px_rgba(255,215,0,0.4)]' 
+                          : 'bg-background/30 text-white/60 border-white/10 hover:bg-background/50'
+                        }
+                      `}
+                    >
+                      <input 
+                        type="radio" 
+                        value={career.value} 
+                        {...form.register("career")} 
+                        className="hidden"
+                      />
+                      {career.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Topic Input */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-white/80">{t("form_topic")}</label>
+                  <input
+                    {...form.register("topic")}
+                    className="w-full px-4 py-3 rounded-xl bg-background/50 border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-white/20 text-white"
+                    placeholder="e.g. Robotics"
+                  />
+                </div>
+
+                {/* Purpose Select */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-white/80">{t("form_purpose")}</label>
+                  <select
+                    {...form.register("purpose")}
+                    className="w-full px-4 py-3 rounded-xl bg-background/50 border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-white"
+                  >
+                    {purposes.map(p => (
+                      <option key={p.id} value={p.value} className="bg-[#240a38]">{p.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {/* Type Select */}
