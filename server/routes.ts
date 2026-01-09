@@ -37,8 +37,35 @@ export async function registerRoutes(
 async function seedDatabase() {
   const existing = await storage.getResources();
   if (existing.length === 0) {
-    await storage.createResource({ title: "Introduction to Industry 5.0", type: "pdf", description: "Fundamental concepts of the new industrial revolution.", link: "#" });
-    await storage.createResource({ title: "Advanced Robotics", type: "book", description: "Textbook for Mechatronics Engineering.", link: "#" });
-    await storage.createResource({ title: "Data Science Algorithms", type: "document", description: "Cheat sheet for common algorithms.", link: "#" });
+    await storage.createResource({ 
+      title: "Introduction to Industry 5.0", 
+      type: "pdf", 
+      description: "Fundamental concepts of the new industrial revolution.", 
+      link: "#",
+      topic: "Industry 5.0",
+      theme: "Cyber-Physical Systems",
+      purpose: "Reference",
+      career: "Industrial Engineering"
+    });
+    await storage.createResource({ 
+      title: "Advanced Robotics", 
+      type: "book", 
+      description: "Textbook for Mechatronics Engineering.", 
+      link: "#",
+      topic: "Robotics",
+      theme: "Automation",
+      purpose: "Textbook",
+      career: "Mechatronics"
+    });
+    await storage.createResource({ 
+      title: "Data Science Algorithms", 
+      type: "document", 
+      description: "Cheat sheet for common algorithms.", 
+      link: "#",
+      topic: "Data Science",
+      theme: "Machine Learning",
+      purpose: "Research",
+      career: "Data Science"
+    });
   }
 }

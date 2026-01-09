@@ -8,6 +8,10 @@ export const resources = pgTable("resources", {
   type: text("type").notNull(), // 'book', 'document', 'pdf'
   description: text("description").notNull(),
   link: text("link").notNull(),
+  topic: text("topic").notNull().default('General'),
+  theme: text("theme").notNull().default('General'),
+  purpose: text("purpose").notNull().default('Academic'),
+  career: text("career").notNull().default('All'),
 });
 
 export const insertResourceSchema = createInsertSchema(resources).omit({ id: true });
