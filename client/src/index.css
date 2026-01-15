@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,41 +6,41 @@
 
 :root {
   /* 
-    Primary: #111111 (Black) -> 0 0% 7%
-    Neutral: #FFFFFF (White) -> 0 0% 100%
-    Secondary: #666666 (Gray) -> 0 0% 40%
+    Primary Purple (from image): #4B0082 -> 275 100% 25% (Adjusted for contrast)
+    Secondary Yellow (from image): #DAA520 -> 43 74% 49%
+    Neutral White: #FFFFFF -> 0 0% 100%
   */
 
-  --font-display: 'Inter', sans-serif;
+  --font-display: 'Montserrat', sans-serif;
   --font-body: 'Inter', sans-serif;
 
   --background: 0 0% 100%;
-  --foreground: 0 0% 7%;
+  --foreground: 275 50% 10%;
 
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 7%;
+  --card-foreground: 275 50% 10%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 7%;
+  --popover-foreground: 275 50% 10%;
 
-  --primary: 0 0% 7%;
+  --primary: 275 80% 30%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 0 0% 96%;
-  --secondary-foreground: 0 0% 7%;
+  --secondary: 43 74% 49%;
+  --secondary-foreground: 0 0% 100%;
 
-  --muted: 0 0% 96%;
-  --muted-foreground: 0 0% 40%;
+  --muted: 275 10% 96%;
+  --muted-foreground: 275 20% 40%;
 
-  --accent: 0 0% 96%;
-  --accent-foreground: 0 0% 7%;
+  --accent: 43 74% 49%;
+  --accent-foreground: 0 0% 100%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
 
-  --border: 0 0% 90%;
-  --input: 0 0% 90%;
-  --ring: 0 0% 7%;
+  --border: 275 20% 90%;
+  --input: 275 20% 90%;
+  --ring: 275 80% 30%;
 
   --radius: 0.75rem;
 }
@@ -67,11 +67,11 @@
   background: hsl(var(--background));
 }
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
+  background: hsl(var(--primary) / 0.2);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground));
+  background: hsl(var(--primary) / 0.4);
 }
 
 /* Gradient Text Utility */
@@ -79,5 +79,5 @@
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-image: linear-gradient(to right, hsl(var(--primary)), hsl(var(--muted-foreground)));
+  background-image: linear-gradient(to right, hsl(var(--primary)), hsl(var(--secondary)));
 }
