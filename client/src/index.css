@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,43 +6,44 @@
 
 :root {
   /* 
-    Primary Purple (from image): #4B0082 -> 275 100% 25% (Adjusted for contrast)
-    Secondary Yellow (from image): #DAA520 -> 43 74% 49%
-    Neutral White: #FFFFFF -> 0 0% 100%
+    Primary: #2E0D47 (Dark Purple) -> 273 69% 16%
+    Secondary: #6A359C (Light Purple) -> 271 49% 41%
+    Highlight: #FFD700 (Vibrant Yellow) -> 51 100% 50%
+    Neutral: #FFFFFF (White) -> 0 0% 100%
   */
 
-  --font-display: 'Montserrat', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  --font-display: 'Poppins', sans-serif;
+  --font-body: 'Roboto', sans-serif;
 
-  --background: 0 0% 100%;
-  --foreground: 275 50% 10%;
+  --background: 260 69% 6%;
+  --foreground: 0 0% 100%;
 
-  --card: 0 0% 100%;
-  --card-foreground: 275 50% 10%;
+  --card: 260 50% 12%;
+  --card-foreground: 0 0% 100%;
 
-  --popover: 0 0% 100%;
-  --popover-foreground: 275 50% 10%;
+  --popover: 260 50% 10%;
+  --popover-foreground: 0 0% 100%;
 
-  --primary: 275 80% 30%;
-  --primary-foreground: 0 0% 100%;
+  --primary: 45 100% 50%;
+  --primary-foreground: 260 69% 10%;
 
-  --secondary: 43 74% 49%;
+  --secondary: 268 49% 41%;
   --secondary-foreground: 0 0% 100%;
 
-  --muted: 275 10% 96%;
-  --muted-foreground: 275 20% 40%;
+  --muted: 260 20% 12%;
+  --muted-foreground: 260 10% 60%;
 
-  --accent: 43 74% 49%;
+  --accent: 268 49% 41%;
   --accent-foreground: 0 0% 100%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
 
-  --border: 275 20% 90%;
-  --input: 275 20% 90%;
-  --ring: 275 80% 30%;
+  --border: 260 30% 15%;
+  --input: 260 30% 15%;
+  --ring: 45 100% 50%;
 
-  --radius: 0.75rem;
+  --radius: 0.5rem;
 }
 
 @layer base {
@@ -50,28 +51,28 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground;
     font-family: var(--font-body);
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
-    @apply font-bold tracking-tight text-primary;
+    @apply font-bold tracking-tight;
   }
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 ::-webkit-scrollbar-track {
   background: hsl(var(--background));
 }
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--primary) / 0.2);
-  border-radius: 4px;
+  background: hsl(var(--secondary));
+  border-radius: 5px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary) / 0.4);
+  background: hsl(var(--primary));
 }
 
 /* Gradient Text Utility */
@@ -79,5 +80,5 @@
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-image: linear-gradient(to right, hsl(var(--primary)), hsl(var(--secondary)));
+  background-image: linear-gradient(to right, hsl(var(--primary)), #fff);
 }
