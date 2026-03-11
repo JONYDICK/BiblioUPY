@@ -207,7 +207,7 @@ Este proyecto está bajo la licencia MIT. Ver [LICENSE](./LICENSE) para más det
 
 ## 👥 Autores
 
-- **BiblioUPY Contributors**
+- **Zumox31**
 
 ## 📞 Soporte
 
