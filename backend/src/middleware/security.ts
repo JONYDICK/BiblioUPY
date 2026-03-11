@@ -3,22 +3,45 @@ import type { Request, Response, NextFunction } from "express";
 
 /**
  * Configuración de Helmet para headers de seguridad
+ * CSP adapted for development (unsafe-inline) y production (nonce-based)
  */
+
+// Desarrollo: Permite unsafe-inline para Vite HMR + PDF.js
+const devCSP = {
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com"],
+    styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+    fontSrc: ["'self'", "https://fonts.gstatic.com"],
+    imgSrc: ["'self'", "data:", "blob:", "https:"],
+    connectSrc: ["'self'", "wss:", "ws:", "blob:", "https://cdnjs.cloudflare.com"],
+    frameSrc: ["'none'"],
+    objectSrc: ["'none'"],
+    mediaSrc: ["'self'", "blob:"],
+    workerSrc: ["'self'", "blob:", "https://cdnjs.cloudflare.com"],
+  },
+};
+
+// Producción: CSP más estricta sin unsafe-inline
+const prodCSP = {
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+    styleSrc: ["'self'", "https://fonts.googleapis.com"],
+    fontSrc: ["'self'", "https://fonts.gstatic.com"],
+    imgSrc: ["'self'", "data:", "blob:", "https:"],
+    connectSrc: ["'self'", "wss:", "https://cdnjs.cloudflare.com"],
+    frameSrc: ["'none'"],
+    objectSrc: ["'none'"],
+    mediaSrc: ["'self'", "blob:"],
+    workerSrc: ["'self'", "blob:", "https://cdnjs.cloudflare.com"],
+    upgradeInsecureRequests: process.env.NODE_ENV === "production" ? [] : undefined,
+  },
+};
+
 export const securityHeaders = helmet({
-  // Content Security Policy
   contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com"], // Necesario para Vite en dev + PDF.js worker
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "blob:", "https:"],
-      connectSrc: ["'self'", "wss:", "ws:", "blob:", "https://cdnjs.cloudflare.com"], // WebSocket para HMR + PDF.js + blob URLs
-      frameSrc: ["'none'"],
-      objectSrc: ["'none'"],
-      mediaSrc: ["'self'", "blob:"],
-      workerSrc: ["'self'", "blob:", "https://cdnjs.cloudflare.com"], // PDF.js worker
-    },
+    directives: process.env.NODE_ENV === "production" ? prodCSP.directives : devCSP.directives,
   },
   // Prevenir clickjacking
   frameguard: { action: "deny" },
