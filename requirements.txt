@@ -1,0 +1,62 @@
+# BiblioUPY Project Dependencies
+# Node.js/TypeScript Project - Use package.json as primary source
+# Install with: npm install
+
+# FRONTEND & UI
+react==18.3.1
+react-dom==18.3.1
+vite==7.3.1
+typescript==5.6.3
+tailwindcss==3.4.17
+
+# UI Component Library (Radix UI + Shadcn)
+@radix-ui/react-accordion==1.2.4
+@radix-ui/react-alert-dialog==1.1.7
+@radix-ui/react-avatar==1.1.4
+@radix-ui/react-checkbox==1.1.5
+@radix-ui/react-dialog==1.1.7
+@radix-ui/react-dropdown-menu==2.1.7
+@radix-ui/react-select==2.1.7
+@radix-ui/react-tabs==1.1.4
+@radix-ui/react-tooltip==1.2.0
+
+# BACKEND
+express==4.21.2
+drizzle-orm==0.39.3
+drizzle-kit==0.31.8
+pg==8.16.3
+
+# AUTHENTICATION & SESSION
+passport==0.7.0
+passport-local==1.0.0
+express-session==1.18.1
+connect-pg-simple==10.0.0
+
+# DATA & VALIDATION
+zod==3.24.2
+drizzle-zod==0.7.0
+zod-validation-error==3.4.0
+
+# UTILITIES
+dotenv==17.2.3
+date-fns==3.6.0
+react-hook-form==7.55.0
+clsx==2.1.1
+tailwind-merge==2.6.0
+
+# REAL-TIME
+ws==8.18.0
+
+# DEV TOOLS
+tsx==4.20.5
+esbuild==0.25.0
+@vitejs/plugin-react==4.7.0
+
+# For local development
+npm install
+
+# For production build
+npm run build
+
+# For database migrations
+npm run db:push
