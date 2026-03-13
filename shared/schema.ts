@@ -373,10 +373,10 @@ export const insertUserSchema = createInsertSchema(users).omit({
   firstName: z.string().min(1, "Nombre requerido").max(100).transform(s => s.trim()),
   lastName: z.string().min(1, "Apellido requerido").max(100).transform(s => s.trim()),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres").max(100),
-  confirmPassword: z.string(),
+  confirmPassword: z.string().min(1, "Debe confirmar la contraseña"),
   studentId: z.string().max(20).optional(),
   career: z.string().max(100).optional(),
-  avatarUrl: z.string().url("Avatar URL debe ser válida").optional(),
+  avatarUrl: z.string().url("Avatar URL debe ser válida").optional().or(z.literal("")),
   bio: z.string().max(500).optional(),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",

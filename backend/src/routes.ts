@@ -77,6 +77,8 @@ export async function registerRoutes(
         lastName: input.lastName,
         studentId: input.studentId || undefined,
         career: input.career || undefined,
+        avatarUrl: input.avatarUrl || undefined,
+        bio: input.bio || undefined,
       });
 
       await logAudit(user.id, "register", "user", user.id, null, null, req);

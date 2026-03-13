@@ -261,6 +261,8 @@ export async function createUser(userData: {
   lastName: string;
   studentId?: string;
   career?: string;
+  avatarUrl?: string;
+  bio?: string;
 }) {
   const passwordHash = await hashPassword(userData.password);
 
@@ -274,6 +276,8 @@ export async function createUser(userData: {
       lastName: userData.lastName,
       studentId: userData.studentId,
       career: userData.career,
+      avatarUrl: userData.avatarUrl,
+      bio: userData.bio,
     })
     .returning();
 
