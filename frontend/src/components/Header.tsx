@@ -1,11 +1,12 @@
 import { Link, useLocation } from "wouter";
 import { useLanguage } from "@/lib/i18n";
-import { Menu, X, Globe, LogIn, UserPlus, User, Search, ChevronDown, Book, FileText, GraduationCap, Users, HelpCircle, MessageSquare } from "lucide-react";
+import { Menu, X, Globe, LogIn, UserPlus, User, Search, ChevronDown, Book, FileText, GraduationCap, Users, HelpCircle, MessageSquare, LogOut } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -27,7 +28,10 @@ export function Header() {
   const { language, toggleLanguage, t } = useLanguage();
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: user, isLoading } = useQuery<User | null>({
     queryKey: ["me"],
@@ -43,6 +47,40 @@ export function Header() {
     retry: false,
     staleTime: 5 * 60 * 1000,
   });
+
+  const handleLogout = async () => {
+    try {
+      const res = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        // Invalidate user query
+        queryClient.invalidateQueries({ queryKey: ["me"] });
+
+        toast({
+          title: "Sesión cerrada",
+          description: "Has cerrado sesión correctamente",
+        });
+
+        // Redirect to home
+        window.location.href = "/";
+      } else {
+        toast({
+          title: "Error",
+          description: "No se pudo cerrar la sesión",
+          variant: "destructive",
+        });
+      }
+    } catch {
+      toast({
+        title: "Error",
+        description: "Error al cerrar la sesión",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,7 +194,7 @@ export function Header() {
 
           {/* Right side actions */}
           <div className="hidden md:flex items-center gap-2">
-            <button 
+            <button
               onClick={toggleLanguage}
               className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium text-gray-600 hover:text-primary hover:bg-gray-50 transition-colors"
             >
@@ -167,12 +205,47 @@ export function Header() {
             {!isLoading && (
               <>
                 {user ? (
-                  <Link href="/profile">
-                    <Button variant="ghost" className="text-gray-700 hover:text-primary hover:bg-gray-50 gap-2">
-                      <User className="w-4 h-4" />
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-full text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors font-medium text-sm"
+                    >
+                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="w-4 h-4 text-primary" />
+                      </div>
                       {user.firstName}
-                    </Button>
-                  </Link>
+                      <ChevronDown className={`w-4 h-4 transition-transform ${isUserMenuOpen ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {/* User Dropdown Menu */}
+                    <AnimatePresence>
+                      {isUserMenuOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+                        >
+                          <Link href="/profile" className="block" onClick={() => setIsUserMenuOpen(false)}>
+                            <button className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors">
+                              <User className="w-4 h-4" />
+                              Ver Perfil
+                            </button>
+                          </Link>
+                          <button
+                            onClick={() => {
+                              handleLogout();
+                              setIsUserMenuOpen(false);
+                            }}
+                            className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors border-t border-gray-100"
+                          >
+                            <LogOut className="w-4 h-4" />
+                            Cerrar Sesión
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <Link href="/login">
@@ -251,9 +324,21 @@ export function Header() {
                   </>
                 )}
                 {user && (
-                  <Link href="/profile" className="block px-4 py-3 rounded-lg text-primary font-medium" onClick={() => setIsMobileMenuOpen(false)}>
-                    Mi Cuenta ({user.firstName})
-                  </Link>
+                  <>
+                    <Link href="/profile" className="block px-4 py-3 rounded-lg text-primary font-medium" onClick={() => setIsMobileMenuOpen(false)}>
+                      Mi Cuenta ({user.firstName})
+                    </Link>
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-3 rounded-lg text-red-600 font-medium flex items-center gap-2 hover:bg-red-50 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Cerrar Sesión
+                    </button>
+                  </>
                 )}
               </div>
             </div>
