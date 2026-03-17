@@ -18,6 +18,7 @@ export const users = pgTable("users", {
   career: varchar("career", { length: 100 }),
   avatarUrl: text("avatar_url"),
   bio: text("bio"),
+  googleId: varchar("google_id", { length: 255 }),
   isActive: boolean("is_active").default(true).notNull(),
   isVerified: boolean("is_verified").default(false).notNull(),
   mfaEnabled: boolean("mfa_enabled").default(false).notNull(),

@@ -2,10 +2,10 @@ import type { Express, Request, Response, NextFunction } from "express";
 import type { Server } from "http";
 import { z } from "zod";
 import { db } from "./db";
-import { 
+import {
   users, resources, files, categories, careers, favorites, downloads,
   ratings, forumCategories, forumThreads, forumPosts, forumVotes,
-  notifications, searchIndex, resourceViews
+  notifications, searchIndex, resourceViews, roles
 } from "../../shared/schema";
 import { 
   loginSchema, insertUserSchema, insertResourceSchema, 
@@ -203,6 +203,22 @@ export async function registerRoutes(
       res.json({ message: "Sesión cerrada" });
     });
   });
+
+  // Google OAuth routes
+  app.get("/api/auth/google", passport.authenticate("google", {
+    scope: ["profile", "email"],
+  }));
+
+  app.get("/api/auth/google/callback",
+    passport.authenticate("google", { failureRedirect: "/login?error=google_auth_failed" }),
+    (req, res) => {
+      const user = req.user as any;
+      console.log("[auth] Usuario autenticado vía Google:", user.email);
+
+      // Redirect to frontend with success
+      res.redirect(`/?google_auth=success&userId=${user.id}`);
+    }
+  );
 
   // Get current user
   app.get("/api/auth/me", isAuthenticated, (req, res) => {

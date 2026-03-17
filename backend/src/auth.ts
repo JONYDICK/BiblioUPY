@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction, Express } from "express";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import bcrypt from "bcryptjs";
@@ -99,6 +100,108 @@ passport.use(
     }
   )
 );
+
+// Google OAuth Strategy
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:3000/api/auth/google/callback",
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        try {
+          if (!profile.emails || profile.emails.length === 0) {
+            return done(null, false, { message: "Google profile sin email" });
+          }
+
+          const email = profile.emails[0].value.toLowerCase();
+
+          // Try to find existing user by email
+          let [user] = await db
+            .select()
+            .from(users)
+            .where(eq(users.email, email))
+            .limit(1);
+
+          if (user) {
+            // User exists, update Google ID if not set
+            if (!user.googleId) {
+              await db.update(users).set({ googleId: profile.id }).where(eq(users.id, user.id));
+            }
+            // Load user with roles
+            const userRolesList = await db
+              .select({
+                roleName: roles.name,
+                permissions: roles.permissions,
+              })
+              .from(userRoles)
+              .innerJoin(roles, eq(userRoles.roleId, roles.id))
+              .where(eq(userRoles.userId, user.id));
+
+            const userWithRoles: UserWithRoles = {
+              ...user,
+              roles: userRolesList.map((r) => r.roleName),
+              permissions: userRolesList.flatMap((r) => r.permissions || []),
+            };
+
+            return done(null, userWithRoles);
+          }
+
+          // User doesn't exist, create a new one
+          const studentRole = await db
+            .select()
+            .from(roles)
+            .where(eq(roles.name, "student"))
+            .limit(1);
+
+          if (!studentRole || studentRole.length === 0) {
+            return done(null, false, { message: "Rol 'student' no configurado" });
+          }
+
+          // Create new user from Google profile
+          const username = profile.displayName?.toLowerCase().replace(/\s+/g, "") || email.split("@")[0];
+          const [firstName, ...lastNameParts] = (profile.displayName || "").split(" ");
+          const lastName = lastNameParts.join(" ") || "OAuth";
+
+          const [newUser] = await db
+            .insert(users)
+            .values({
+              email,
+              username: `${username}_${Date.now().toString(36)}`, // Ensure unique username
+              passwordHash: "", // No password for OAuth users
+              firstName: firstName || "",
+              lastName: lastName,
+              googleId: profile.id,
+              avatarUrl: profile.photos?.[0]?.value,
+              isActive: true,
+            })
+            .returning();
+
+          // Assign student role
+          await db.insert(userRoles).values({
+            userId: newUser.id,
+            roleId: studentRole[0].id,
+          });
+
+          console.log(`[auth] Usuario creado desde Google: ${email} (ID: ${newUser.id})`);
+
+          const userWithRoles: UserWithRoles = {
+            ...newUser,
+            roles: ["student"],
+            permissions: studentRole[0].permissions || [],
+          };
+
+          done(null, userWithRoles);
+        } catch (error) {
+          console.error("[auth] Error en Google OAuth:", error);
+          done(error);
+        }
+      }
+    )
+  );
+}
 
 passport.serializeUser((user: UserWithRoles | Express.User, done) => {
   if (typeof user === "object" && "id" in user) {
