@@ -14,6 +14,7 @@ import Home from "@/pages/Home";
 import Upload from "@/pages/Upload";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import Profile from "@/pages/Profile";
 import Resource from "@/pages/Resource";
 
 // Forum Pages
@@ -45,6 +46,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/upload" component={Upload} />
+        <Route path="/profile" component={Profile} />
         <Route path="/resource/:id" component={Resource} />
         <Route path="/forum" component={ForumCategories} />
         <Route path="/forum/category/:categorySlug" component={ForumThreads} />

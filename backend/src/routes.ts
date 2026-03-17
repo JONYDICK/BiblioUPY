@@ -332,10 +332,73 @@ export async function registerRoutes(
       firstName: user.firstName,
       lastName: user.lastName,
       avatarUrl: user.avatarUrl,
+      bannerUrl: user.bannerUrl,
+      bio: user.bio,
+      studentId: user.studentId,
+      career: user.career,
       mfaEnabled: user.mfaEnabled,
       roles: user.roles || [],
       permissions: user.permissions || [],
     });
+  });
+
+  // Update user profile
+  app.patch("/api/users/me", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      console.log("[auth] Actualizando perfil de usuario:", user.id);
+
+      // Validate input
+      const { updateUserProfileSchema } = await import("../../shared/schema");
+      const input = updateUserProfileSchema.parse(req.body);
+      console.log("[auth] Datos de perfil válidos");
+
+      // Build update object - only include provided fields
+      const updateData: any = {};
+      if (input.firstName !== undefined) updateData.firstName = input.firstName;
+      if (input.lastName !== undefined) updateData.lastName = input.lastName;
+      if (input.bio !== undefined) updateData.bio = input.bio;
+      if (input.avatarUrl !== undefined) updateData.avatarUrl = input.avatarUrl;
+      if (input.bannerUrl !== undefined) updateData.bannerUrl = input.bannerUrl;
+      if (input.studentId !== undefined) updateData.studentId = input.studentId;
+      if (input.career !== undefined) updateData.career = input.career;
+      updateData.updatedAt = new Date();
+
+      // Update in database
+      const [updatedUser] = await db
+        .update(users)
+        .set(updateData)
+        .where(eq(users.id, user.id))
+        .returning();
+
+      // Log audit
+      await logAudit(user.id, "profile_update", "user", user.id, null, updateData, req);
+
+      console.log("[auth] ✓ Perfil actualizado para usuario:", user.id);
+      res.json({
+        message: "Perfil actualizado exitosamente",
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          username: updatedUser.username,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          bio: updatedUser.bio,
+          avatarUrl: updatedUser.avatarUrl,
+          bannerUrl: updatedUser.bannerUrl,
+          studentId: updatedUser.studentId,
+          career: updatedUser.career,
+        }
+      });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        const firstError = err.errors?.[0]?.message || "Datos inválidos";
+        console.error("[auth] Error de validación:", firstError);
+        return res.status(400).json({ message: firstError });
+      }
+      console.error("[auth] Error actualizando perfil:", err instanceof Error ? err.message : String(err));
+      res.status(500).json({ message: "Error actualizando el perfil" });
+    }
   });
 
   // Get user statistics

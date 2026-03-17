@@ -17,6 +17,7 @@ export const users = pgTable("users", {
   studentId: varchar("student_id", { length: 20 }),
   career: varchar("career", { length: 100 }),
   avatarUrl: text("avatar_url"),
+  bannerUrl: text("banner_url"),
   bio: text("bio"),
   googleId: varchar("google_id", { length: 255 }),
   isActive: boolean("is_active").default(true).notNull(),
@@ -387,7 +388,16 @@ export const updateUserSchema = createInsertSchema(users).omit({
   mfaSecret: true,
 }).partial();
 
-export const insertResourceSchema = createInsertSchema(resources).omit({ 
+export const updateUserProfileSchema = z.object({
+  firstName: z.string().min(1, "Nombre requerido").max(100).optional(),
+  lastName: z.string().min(1, "Apellido requerido").max(100).optional(),
+  bio: z.string().max(500, "Bio no puede exceder 500 caracteres").transform(val => val === "" ? null : val).nullable().optional(),
+  avatarUrl: z.string().url("Avatar URL debe ser válida").optional().or(z.literal(null)).nullable(),
+  bannerUrl: z.string().url("Banner URL debe ser válida").optional().or(z.literal(null)).nullable(),
+  studentId: z.string().max(20).optional().or(z.literal(null)).nullable(),
+  career: z.string().max(100).optional().or(z.literal(null)).nullable(),
+});
+ 
   id: true, 
   slug: true,
   viewCount: true,

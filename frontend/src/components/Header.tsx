@@ -167,7 +167,7 @@ export function Header() {
             {!isLoading && (
               <>
                 {user ? (
-                  <Link href="/">
+                  <Link href="/profile">
                     <Button variant="ghost" className="text-gray-700 hover:text-primary hover:bg-gray-50 gap-2">
                       <User className="w-4 h-4" />
                       {user.firstName}
@@ -251,7 +251,7 @@ export function Header() {
                   </>
                 )}
                 {user && (
-                  <Link href="/" className="block px-4 py-3 rounded-lg text-primary font-medium" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link href="/profile" className="block px-4 py-3 rounded-lg text-primary font-medium" onClick={() => setIsMobileMenuOpen(false)}>
                     Mi Cuenta ({user.firstName})
                   </Link>
                 )}
