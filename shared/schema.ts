@@ -357,27 +357,15 @@ export const forumPostsRelations = relations(forumPosts, ({ one, many }) => ({
 // ZOD SCHEMAS FOR VALIDATION
 // ============================================================================
 
-export const insertUserSchema = createInsertSchema(users).omit({ 
-  id: true, 
-  passwordHash: true,
-  createdAt: true, 
-  updatedAt: true,
-  lastLoginAt: true,
-  mfaSecret: true,
-  isVerified: true,
-  isActive: true,
-  mfaEnabled: true,
-}).extend({
-  email: z.string().email("Email debe ser válido").toLowerCase(),
-  username: z.string().min(3, "Username mínimo 3 caracteres").max(50).regex(/^[a-zA-Z0-9_-]+$/, "Username solo puede contener letras, números, _ y -"),
-  firstName: z.string().min(1, "Nombre requerido").max(100).transform(s => s.trim()),
-  lastName: z.string().min(1, "Apellido requerido").max(100).transform(s => s.trim()),
-  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres").max(100),
+export const insertUserSchema = z.object({
+  email: z.string().email("Email debe ser válido"),
+  username: z.string().min(3, "Username mínimo 3 caracteres").max(50),
+  firstName: z.string().min(1, "Nombre requerido"),
+  lastName: z.string().min(1, "Apellido requerido"),
+  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
   confirmPassword: z.string().min(1, "Debe confirmar la contraseña"),
-  studentId: z.string().max(20).optional(),
-  career: z.string().max(100).optional(),
-  avatarUrl: z.string().url("Avatar URL debe ser válida").optional().or(z.literal("")),
-  bio: z.string().max(500).optional(),
+  studentId: z.string().optional(),
+  career: z.string().optional(),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],

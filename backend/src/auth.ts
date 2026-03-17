@@ -264,7 +264,9 @@ export async function createUser(userData: {
   avatarUrl?: string;
   bio?: string;
 }) {
+  console.log("[auth] Creando usuario:", userData.email);
   const passwordHash = await hashPassword(userData.password);
+  console.log("[auth] Contraseña hasheada");
 
   const [user] = await db
     .insert(users)
@@ -281,6 +283,8 @@ export async function createUser(userData: {
     })
     .returning();
 
+  console.log("[auth] Usuario insertado con ID:", user.id);
+
   // Assign default "student" role
   const [studentRole] = await db
     .select()
@@ -293,6 +297,7 @@ export async function createUser(userData: {
       userId: user.id,
       roleId: studentRole.id,
     });
+    console.log("[auth] Rol asignado al usuario");
   }
 
   return user;
@@ -388,69 +393,80 @@ export async function usePasswordResetToken(token: string, newPassword: string) 
 // ============================================================================
 
 export async function seedDefaultRoles() {
-  const defaultRoles = [
-    {
-      name: "admin",
-      description: "Administrador del sistema",
-      permissions: [
-        "manage_users",
-        "manage_roles",
-        "manage_resources",
-        "approve_resources",
-        "delete_resources",
-        "manage_forum",
-        "view_audit_logs",
-        "manage_categories",
-      ],
-    },
-    {
-      name: "librarian",
-      description: "Bibliotecario",
-      permissions: [
-        "manage_resources",
-        "approve_resources",
-        "manage_categories",
-        "view_statistics",
-      ],
-    },
-    {
-      name: "professor",
-      description: "Profesor",
-      permissions: [
-        "upload_resources",
-        "manage_own_resources",
-        "create_forum_threads",
-        "moderate_own_threads",
-      ],
-    },
-    {
-      name: "student",
-      description: "Estudiante",
-      permissions: [
-        "upload_resources",
-        "download_resources",
-        "create_forum_threads",
-        "comment_forum",
-      ],
-    },
-    {
-      name: "guest",
-      description: "Invitado",
-      permissions: ["view_resources"],
-    },
-  ];
+  try {
+    console.log("[auth] Inicializando roles por defecto...");
 
-  for (const role of defaultRoles) {
-    const existing = await db
-      .select()
-      .from(roles)
-      .where(eq(roles.name, role.name))
-      .limit(1);
+    const defaultRoles = [
+      {
+        name: "admin",
+        description: "Administrador del sistema",
+        permissions: [
+          "manage_users",
+          "manage_roles",
+          "manage_resources",
+          "approve_resources",
+          "delete_resources",
+          "manage_forum",
+          "view_audit_logs",
+          "manage_categories",
+        ],
+      },
+      {
+        name: "librarian",
+        description: "Bibliotecario",
+        permissions: [
+          "manage_resources",
+          "approve_resources",
+          "manage_categories",
+          "view_statistics",
+        ],
+      },
+      {
+        name: "professor",
+        description: "Profesor",
+        permissions: [
+          "upload_resources",
+          "manage_own_resources",
+          "create_forum_threads",
+          "moderate_own_threads",
+        ],
+      },
+      {
+        name: "student",
+        description: "Estudiante",
+        permissions: [
+          "upload_resources",
+          "download_resources",
+          "create_forum_threads",
+          "comment_forum",
+        ],
+      },
+      {
+        name: "guest",
+        description: "Invitado",
+        permissions: ["view_resources"],
+      },
+    ];
 
-    if (existing.length === 0) {
-      await db.insert(roles).values(role);
-      console.log(`[auth] Rol "${role.name}" creado`);
+    let createdCount = 0;
+    for (const role of defaultRoles) {
+      const existing = await db
+        .select()
+        .from(roles)
+        .where(eq(roles.name, role.name))
+        .limit(1);
+
+      if (existing.length === 0) {
+        await db.insert(roles).values(role);
+        console.log(`[auth] Rol "${role.name}" creado`);
+        createdCount++;
+      }
     }
+
+    console.log(`[auth] ✓ Roles inicializados (${createdCount} nuevos roles creados)`);
+  } catch (err) {
+    console.error("[auth] Error inicializando roles:", err instanceof Error ? err.message : String(err));
+    throw err;
   }
 }
 

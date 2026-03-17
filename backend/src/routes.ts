@@ -47,12 +47,17 @@ export async function registerRoutes(
   
   // Configure session and passport
   configureSession(app);
-  
+
   // Ensure upload directory exists
   await ensureUploadDir();
-  
+
   // Seed default roles
-  await seedDefaultRoles();
+  try {
+    await seedDefaultRoles();
+  } catch (err) {
+    console.error("[startup] Error inicializando roles:", err instanceof Error ? err.message : String(err));
+    throw new Error("No se pudieron inicializar los roles de la aplicación");
+  }
 
   // ============================================================================
   // AUTH ROUTES
@@ -61,12 +66,37 @@ export async function registerRoutes(
   // Register
   app.post("/api/auth/register", registerLimiter, async (req, res) => {
     try {
+      console.log("[auth] Procesando registro...");
       const input = insertUserSchema.parse(req.body);
-      
+      console.log("[auth] Entrada válida:", { email: input.email, username: input.username });
+
       // Check if user already exists
       const existing = await getUserByEmail(input.email);
       if (existing) {
         return res.status(400).json({ message: "El email ya está registrado" });
+      }
+
+      // Check if username already exists
+      const existingUsername = await db
+        .select()
+        .from(users)
+        .where(eq(users.username, input.username.toLowerCase()))
+        .limit(1);
+
+      if (existingUsername.length > 0) {
+        return res.status(400).json({ message: "El nombre de usuario ya está registrado" });
+      }
+
+      // Validate student role exists
+      const studentRoleResult = await db
+        .select()
+        .from(roles)
+        .where(eq(roles.name, "student"))
+        .limit(1);
+
+      if (studentRoleResult.length === 0) {
+        console.error("[auth] El rol 'student' no existe en la base de datos");
+        return res.status(500).json({ message: "Configuración del sistema incompleta. El rol 'student' no existe." });
       }
 
       const user = await createUser({
@@ -75,24 +105,29 @@ export async function registerRoutes(
         password: input.password,
         firstName: input.firstName,
         lastName: input.lastName,
-        studentId: input.studentId || undefined,
-        career: input.career || undefined,
-        avatarUrl: input.avatarUrl || undefined,
-        bio: input.bio || undefined,
+        studentId: input.studentId,
+        career: input.career,
+        avatarUrl: input.avatarUrl,
+        bio: input.bio,
       });
 
       await logAudit(user.id, "register", "user", user.id, null, null, req);
 
-      res.status(201).json({ 
+      console.log("[auth] ✓ Usuario registrado exitosamente:", user.email);
+      res.status(201).json({
         message: "Cuenta creada exitosamente",
         user: { id: user.id, email: user.email, username: user.username }
       });
     } catch (err) {
       if (err instanceof z.ZodError) {
         const firstError = err.errors?.[0]?.message || err.message || "Datos de registro inválidos";
+        console.error("[auth] Error de validación:", firstError);
         return res.status(400).json({ message: firstError });
       }
-      console.error("[auth] Register error:", err);
+      console.error("[auth] Error en registro:", err instanceof Error ? err.message : String(err));
+      if (err instanceof Error) {
+        console.error("[auth] Stack trace:", err.stack);
+      }
       res.status(500).json({ message: "Error al crear la cuenta" });
     }
   });
