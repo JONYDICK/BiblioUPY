@@ -1,5 +1,5 @@
 import { useLanguage } from "@/lib/i18n";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
@@ -36,6 +36,29 @@ export default function Upload() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+
+  // Check authentication
+  const { data: user, error: authError } = useQuery({
+    queryKey: ["me"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/me", { credentials: "include" });
+      if (!res.ok) throw new Error("Not authenticated");
+      return res.json();
+    },
+    retry: false,
+  });
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (authError) {
+      toast({
+        title: "Acceso requerido",
+        description: "Debes iniciar sesión para subir recursos",
+        variant: "destructive",
+      });
+      setLocation("/login");
+    }
+  }, [authError, setLocation, toast]);
   
   // Form state
   const [mode, setMode] = useState<UploadMode>("file");
@@ -333,17 +356,25 @@ export default function Upload() {
   return (
     <main className="min-h-screen pt-32 pb-20 px-4 sm:px-6 bg-gray-50">
       <div className="max-w-2xl mx-auto">
-        
-        <Link href="/" className="inline-flex items-center text-gray-500 hover:text-primary mb-8 transition-colors">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Volver al inicio
-        </Link>
+        {/* Redirect in progress or not authenticated */}
+        {authError && (
+          <div className="text-center py-20">
+            <p className="text-gray-500">Redirigiendo a inicio de sesión...</p>
+          </div>
+        )}
 
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white border border-gray-200 rounded-2xl p-8 md:p-12 shadow-lg"
-        >
+        {!authError && user && (
+          <>
+            <Link href="/" className="inline-flex items-center text-gray-500 hover:text-primary mb-8 transition-colors">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Volver al inicio
+            </Link>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white border border-gray-200 rounded-2xl p-8 md:p-12 shadow-lg"
+            >
           <div className="flex items-center gap-4 mb-2">
             <div className="p-3 bg-primary/10 rounded-xl">
               <UploadCloud className="w-8 h-8 text-primary" />
@@ -585,6 +616,8 @@ export default function Upload() {
 
           </form>
         </motion.div>
+          </>
+        )}
       </div>
     </main>
   );
