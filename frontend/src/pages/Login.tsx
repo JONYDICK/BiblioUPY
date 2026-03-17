@@ -53,7 +53,7 @@ export default function Login() {
       } else {
         // Guardar usuario en localStorage o context
         localStorage.setItem("user", JSON.stringify(data.user));
-        navigate("/dashboard");
+        navigate("/");
       }
     },
     onError: (err: Error) => {

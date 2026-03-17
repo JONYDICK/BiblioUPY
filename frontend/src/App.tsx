@@ -14,7 +14,6 @@ import Home from "@/pages/Home";
 import Upload from "@/pages/Upload";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
-import Dashboard from "@/pages/Dashboard";
 import Resource from "@/pages/Resource";
 
 // Forum Pages
@@ -24,7 +23,7 @@ import ForumThread from "@/pages/forum/ForumThread";
 import CreateThread from "@/pages/forum/CreateThread";
 
 // Routes without default header/footer
-const standaloneRoutes = ["/login", "/register", "/forgot-password", "/dashboard"];
+const standaloneRoutes = ["/login", "/register", "/forgot-password"];
 
 function Router() {
   const [location] = useLocation();
@@ -35,7 +34,6 @@ function Router() {
       <Switch>
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
-        <Route path="/dashboard" component={Dashboard} />
         <Route component={NotFound} />
       </Switch>
     );
