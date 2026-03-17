@@ -111,12 +111,23 @@ export async function registerRoutes(
         bio: input.bio,
       });
 
+      // Generate MFA secret and QR code (mandatory setup)
+      console.log("[auth] Generando MFA para usuario:", user.id);
+      const mfaSecret = generateMfaSecret();
+      const mfaQrCode = await generateMfaQrCode(user.email, mfaSecret);
+
+      // Store temporary MFA secret in session
+      (req.session as any).pendingMfaSecret = mfaSecret;
+      (req.session as any).pendingMfaUserId = user.id;
+
       await logAudit(user.id, "register", "user", user.id, null, null, req);
 
-      console.log("[auth] ✓ Usuario registrado exitosamente:", user.email);
+      console.log("[auth] ✓ Usuario registrado. Esperando confirmación de MFA...");
       res.status(201).json({
-        message: "Cuenta creada exitosamente",
-        user: { id: user.id, email: user.email, username: user.username }
+        message: "Cuenta creada. Escanea el código QR con tu app de autenticación (Google Authenticator, Authy, etc.)",
+        user: { id: user.id, email: user.email, username: user.username },
+        mfaQrCode: mfaQrCode,
+        mfaSecret: mfaSecret
       });
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -204,6 +215,64 @@ export async function registerRoutes(
     });
   });
 
+  // Confirm MFA setup (required after registration)
+  app.post("/api/auth/confirm-mfa", async (req, res) => {
+    try {
+      const { mfaToken } = req.body;
+
+      if (!mfaToken) {
+        return res.status(400).json({ message: "Código MFA requerido" });
+      }
+
+      // Get pending MFA data from session
+      const pendingSecret = (req.session as any).pendingMfaSecret;
+      const pendingUserId = (req.session as any).pendingMfaUserId;
+
+      if (!pendingSecret || !pendingUserId) {
+        return res.status(401).json({ message: "No hay configuración de MFA pendiente. Intenta registrarte de nuevo." });
+      }
+
+      // Verify the MFA token
+      console.log("[auth] Verificando código MFA para usuario:", pendingUserId);
+      const isValidToken = await verifyMfaToken(mfaToken, pendingSecret);
+
+      if (!isValidToken) {
+        console.error("[auth] Código MFA inválido para usuario:", pendingUserId);
+        return res.status(401).json({ message: "Código OTP inválido. Intenta de nuevo." });
+      }
+
+      // Enable MFA in database and mark user as verified
+      console.log("[auth] Habilitando MFA para usuario:", pendingUserId);
+      await enableMfa(pendingUserId, pendingSecret);
+
+      // Mark user as verified
+      await db.update(users).set({ isVerified: true }).where(eq(users.id, pendingUserId));
+
+      // Get user to log
+      const [verifiedUser] = await db.select().from(users).where(eq(users.id, pendingUserId)).limit(1);
+
+      // Log the action
+      await logAudit(pendingUserId, "mfa_confirmed", "user", pendingUserId, null, null, req);
+
+      // Clear session
+      delete (req.session as any).pendingMfaSecret;
+      delete (req.session as any).pendingMfaUserId;
+
+      console.log("[auth] ✓ MFA confirmado para usuario:", verifiedUser.email);
+      res.status(200).json({
+        message: "¡MFA confirmado correctamente! Ya puedes iniciar sesión.",
+        user: {
+          id: verifiedUser.id,
+          email: verifiedUser.email,
+          username: verifiedUser.username
+        }
+      });
+    } catch (err) {
+      console.error("[auth] Error confirmando MFA:", err instanceof Error ? err.message : String(err));
+      res.status(500).json({ message: "Error confirmando MFA" });
+    }
+  });
+
   // Google OAuth routes
   app.get("/api/auth/google", passport.authenticate("google", {
     scope: ["profile", "email"],
@@ -211,12 +280,45 @@ export async function registerRoutes(
 
   app.get("/api/auth/google/callback",
     passport.authenticate("google", { failureRedirect: "/login?error=google_auth_failed" }),
-    (req, res) => {
-      const user = req.user as any;
-      console.log("[auth] Usuario autenticado vía Google:", user.email);
+    async (req, res) => {
+      try {
+        const user = req.user as any;
+        console.log("[auth] Usuario autenticado vía Google:", user.email);
 
-      // Redirect to frontend with success
-      res.redirect(`/?google_auth=success&userId=${user.id}`);
+        // Check if this is a new user requiring MFA setup
+        if (user.requiresMfaSetup) {
+          console.log("[auth] Nuevo usuario de Google, generando QR de MFA:", user.id);
+
+          // Generate QR code for MFA
+          const mfaQrCode = await generateMfaQrCode(user.email, user.mfaSecret);
+
+          // Store in session for confirm-mfa endpoint
+          (req.session as any).pendingMfaSecret = user.mfaSecret;
+          (req.session as any).pendingMfaUserId = user.id;
+
+          // Redirect to frontend with MFA setup needed
+          const qrEncoded = encodeURIComponent(mfaQrCode);
+          const secretEncoded = encodeURIComponent(user.mfaSecret);
+          res.redirect(`/?google_auth=mfa_required&userId=${user.id}&qrCode=${qrEncoded}&secret=${secretEncoded}`);
+        } else {
+          // Existing user, log them in
+          req.logIn(user, async (loginErr) => {
+            if (loginErr) {
+              console.error("[auth] Error logging in Google user:", loginErr);
+              return res.redirect("/login?error=login_failed");
+            }
+
+            await updateLastLogin(user.id);
+            await logAudit(user.id, "login_oauth", "user", user.id, null, null, req);
+
+            // Redirect to home with success
+            res.redirect(`/?google_auth=success&userId=${user.id}`);
+          });
+        }
+      } catch (error) {
+        console.error("[auth] Error en callback de Google:", error);
+        res.redirect("/login?error=callback_error");
+      }
     }
   );
 

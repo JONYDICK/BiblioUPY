@@ -88,6 +88,11 @@ passport.use(
           return done(null, false, { message: "Email o contraseña incorrectos" });
         }
 
+        // Validate that MFA setup is confirmed
+        if (!user.isVerified) {
+          return done(null, false, { message: "Cuenta no verificada. Completa la configuración de MFA." });
+        }
+
         // If MFA is enabled, we need to verify the token in a separate step
         if (user.mfaEnabled) {
           return done(null, { ...user, requiresMfa: true });
@@ -160,10 +165,13 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             return done(null, false, { message: "Rol 'student' no configurado" });
           }
 
-          // Create new user from Google profile
+          // Create new user from Google profile with MFA setup required
           const username = profile.displayName?.toLowerCase().replace(/\s+/g, "") || email.split("@")[0];
           const [firstName, ...lastNameParts] = (profile.displayName || "").split(" ");
           const lastName = lastNameParts.join(" ") || "OAuth";
+
+          // Generate MFA secret for new OAuth users (mandatory)
+          const mfaSecret = generateMfaSecret();
 
           const [newUser] = await db
             .insert(users)
@@ -176,6 +184,9 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
               googleId: profile.id,
               avatarUrl: profile.photos?.[0]?.value,
               isActive: true,
+              isVerified: false, // Pending MFA setup
+              mfaSecret: mfaSecret, // Store secret temporarily
+              mfaEnabled: false, // Enable after confirmation
             })
             .returning();
 
@@ -185,7 +196,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             roleId: studentRole[0].id,
           });
 
-          console.log(`[auth] Usuario creado desde Google: ${email} (ID: ${newUser.id})`);
+          console.log(`[auth] Usuario creado desde Google: ${email} (ID: ${newUser.id}) - Esperando confirmación de MFA`);
 
           const userWithRoles: UserWithRoles = {
             ...newUser,
@@ -193,7 +204,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             permissions: studentRole[0].permissions || [],
           };
 
-          done(null, userWithRoles);
+          // Return user with flag indicating MFA setup is required
+          return done(null, { ...userWithRoles, requiresMfaSetup: true } as any);
         } catch (error) {
           console.error("[auth] Error en Google OAuth:", error);
           done(error);
