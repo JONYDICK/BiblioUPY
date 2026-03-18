@@ -22,12 +22,12 @@ const devCSP = {
   },
 };
 
-// Producción: CSP más estricta sin unsafe-inline
+// Producción: CSP con unsafe-inline necesario para Vite builds y Radix UI
 const prodCSP = {
   directives: {
     defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", "https://cdnjs.cloudflare.com"],
-    styleSrc: ["'self'", "https://fonts.googleapis.com"],
+    scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+    styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
     fontSrc: ["'self'", "https://fonts.gstatic.com"],
     imgSrc: ["'self'", "data:", "blob:", "https:"],
     connectSrc: ["'self'", "wss:", "https://cdnjs.cloudflare.com"],
