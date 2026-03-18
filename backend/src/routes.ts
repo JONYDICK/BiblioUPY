@@ -51,12 +51,12 @@ export async function registerRoutes(
   // Ensure upload directory exists
   await ensureUploadDir();
 
-  // Seed default roles
+  // Seed default roles (non-fatal if DB tables don't exist yet)
   try {
     await seedDefaultRoles();
   } catch (err) {
-    console.error("[startup] Error inicializando roles:", err instanceof Error ? err.message : String(err));
-    throw new Error("No se pudieron inicializar los roles de la aplicación");
+    console.warn("[startup] Warning: No se pudieron inicializar roles:", err instanceof Error ? err.message : String(err));
+    console.warn("[startup] La app continuará sin roles predeterminados. Ejecute las migraciones de BD.");
   }
 
   // ============================================================================
