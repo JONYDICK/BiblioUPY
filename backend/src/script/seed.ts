@@ -6,7 +6,7 @@
 import "dotenv/config";
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
-import { careers, categories, forumCategories } from "../../../shared/schema";
+import { careers, categories, forumCategories, users, userRoles, sessions, mfaTokens, passwordResets, auditLogs, favorites, downloads, resourceViews, ratings, forumVotes, forumPosts, forumThreads, notifications, searchIndex, resources, files } from "../../../shared/schema";
 
 // Crear conexión directa para el seed
 const pool = new pg.Pool({
@@ -17,6 +17,33 @@ const db = drizzle(pool);
 
 async function seed() {
   console.log("🌱 Iniciando seed de la base de datos...\n");
+
+  // ============================================================================
+  // CLEAN EXISTING TEST DATA (one-time cleanup for fresh deploy)
+  // ============================================================================
+  console.log("🧹 Limpiando datos de prueba existentes...");
+  try {
+    await db.delete(forumVotes);
+    await db.delete(forumPosts);
+    await db.delete(forumThreads);
+    await db.delete(notifications);
+    await db.delete(searchIndex);
+    await db.delete(ratings);
+    await db.delete(resourceViews);
+    await db.delete(downloads);
+    await db.delete(favorites);
+    await db.delete(resources);
+    await db.delete(files);
+    await db.delete(auditLogs);
+    await db.delete(passwordResets);
+    await db.delete(mfaTokens);
+    await db.delete(sessions);
+    await db.delete(userRoles);
+    await db.delete(users);
+    console.log("  ✅ Datos de usuario limpiados");
+  } catch (err) {
+    console.log("  ⚠️ Error limpiando (puede ser normal en primera ejecución):", err);
+  }
 
   // ============================================================================
   // CARRERAS UPY

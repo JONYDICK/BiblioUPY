@@ -5,7 +5,7 @@ import { db } from "./db";
 import {
   users, resources, files, categories, careers, favorites, downloads,
   ratings, forumCategories, forumThreads, forumPosts, forumVotes,
-  notifications, searchIndex, resourceViews, roles
+  notifications, searchIndex, resourceViews, roles, userRoles
 } from "../../shared/schema";
 import { 
   loginSchema, insertUserSchema, insertResourceSchema, 
@@ -58,6 +58,28 @@ export async function registerRoutes(
     console.warn("[startup] Warning: No se pudieron inicializar roles:", err instanceof Error ? err.message : String(err));
     console.warn("[startup] La app continuará sin roles predeterminados. Ejecute las migraciones de BD.");
   }
+
+  // Auto-cleanup: delete unverified accounts older than 5 minutes
+  const CLEANUP_INTERVAL = 60 * 1000; // check every minute
+  const MAX_UNVERIFIED_AGE = 5 * 60 * 1000; // 5 minutes
+  setInterval(async () => {
+    try {
+      const cutoff = new Date(Date.now() - MAX_UNVERIFIED_AGE);
+      const expired = await db
+        .select({ id: users.id, email: users.email })
+        .from(users)
+        .where(and(eq(users.isVerified, false), sql`${users.createdAt} < ${cutoff}`));
+      
+      for (const user of expired) {
+        // Delete related records first, then the user
+        await db.delete(userRoles).where(eq(userRoles.userId, user.id));
+        await db.delete(users).where(eq(users.id, user.id));
+        console.log(`[cleanup] Cuenta no verificada eliminada: ${user.email} (>5 min sin MFA)`);
+      }
+    } catch (err) {
+      // Silent fail — don't crash the server for cleanup
+    }
+  }, CLEANUP_INTERVAL);
 
   // ============================================================================
   // AUTH ROUTES
