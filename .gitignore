@@ -85,7 +85,8 @@ ENV/
 develop-eggs/
 eggs/
 .eggs/
-lib/
+# Python lib/ (only at root, not frontend/src/lib/)
+/lib/
 lib64/
 parts/
 sdist/
