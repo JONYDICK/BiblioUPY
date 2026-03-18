@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -22,6 +22,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
   const [showPassword, setShowPassword] = useState(false);
   const [requiresMfa, setRequiresMfa] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +41,7 @@ export default function Login() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(data),
       });
       const result = await res.json();
@@ -51,8 +53,8 @@ export default function Login() {
         setRequiresMfa(true);
         setError(null);
       } else {
-        // Guardar usuario en localStorage o context
         localStorage.setItem("user", JSON.stringify(data.user));
+        queryClient.invalidateQueries({ queryKey: ["me"] });
         navigate("/");
       }
     },

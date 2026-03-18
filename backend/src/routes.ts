@@ -233,17 +233,23 @@ export async function registerRoutes(
           await updateLastLogin(user.id);
           await logAudit(user.id, "login", "user", user.id, null, null, req);
 
-          res.json({
-            message: "Sesión iniciada",
-            user: {
-              id: user.id,
-              email: user.email,
-              username: user.username,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              avatarUrl: user.avatarUrl,
-              mfaEnabled: user.mfaEnabled,
-            },
+          // Explicitly save session before responding
+          req.session.save((saveErr) => {
+            if (saveErr) {
+              console.error("[auth] Error saving session:", saveErr);
+            }
+            res.json({
+              message: "Sesión iniciada",
+              user: {
+                id: user.id,
+                email: user.email,
+                username: user.username,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                avatarUrl: user.avatarUrl,
+                mfaEnabled: user.mfaEnabled,
+              },
+            });
           });
         });
     })(req, res, next);
