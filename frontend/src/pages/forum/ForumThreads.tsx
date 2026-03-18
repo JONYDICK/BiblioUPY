@@ -31,6 +31,11 @@ interface Thread {
   };
 }
 
+interface ForumCategory {
+  id: number;
+  slug: string;
+}
+
 export default function ForumThreads() {
   const params = useParams<{ categorySlug: string }>();
   const categorySlug = params.categorySlug;
@@ -38,10 +43,24 @@ export default function ForumThreads() {
   const { data, isLoading } = useQuery<{ threads: Thread[] }>({
     queryKey: ["forum-threads", categorySlug],
     queryFn: async () => {
-      // Placeholder - in real app would use categorySlug to fetch
-      const res = await fetch(`/api/forum/categories/1/threads`);
-      if (!res.ok) throw new Error("Error loading threads");
-      return { threads: await res.json() };
+      const categoriesRes = await fetch("/api/forum/categories");
+      if (!categoriesRes.ok) {
+        throw new Error("Error loading forum categories");
+      }
+
+      const categories: ForumCategory[] = await categoriesRes.json();
+      const category = categories.find((c) => c.slug === categorySlug);
+
+      if (!category) {
+        return { threads: [] };
+      }
+
+      const threadsRes = await fetch(`/api/forum/categories/${category.id}/threads`);
+      if (!threadsRes.ok) {
+        throw new Error("Error loading threads");
+      }
+
+      return { threads: await threadsRes.json() };
     },
   });
 

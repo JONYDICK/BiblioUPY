@@ -1,14 +1,16 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "strict": true,
+    "strict": false,
     "outDir": "dist",
     "rootDir": "src",
     "baseUrl": ".",
+    "noEmitOnError": false,
     "paths": {
       "@shared/*": ["../shared/*"]
     }

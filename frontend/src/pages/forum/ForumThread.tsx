@@ -41,6 +41,16 @@ interface Thread {
   authorId: number;
 }
 
+interface ForumCategory {
+  id: number;
+  slug: string;
+}
+
+interface ForumThreadSummary {
+  id: number;
+  slug: string;
+}
+
 export default function ForumThread() {
   const params = useParams<{ threadSlug: string }>();
   const { toast } = useToast();
@@ -50,10 +60,30 @@ export default function ForumThread() {
   const { data, isLoading } = useQuery<{ thread: Thread; posts: Post[] }>({
     queryKey: ["forum-thread", params.threadSlug],
     queryFn: async () => {
-      // In real app, would look up thread by slug
-      const res = await fetch(`/api/forum/threads/1`);
-      if (!res.ok) throw new Error("Error loading thread");
-      return res.json();
+      const categoriesRes = await fetch("/api/forum/categories");
+      if (!categoriesRes.ok) {
+        throw new Error("Error loading forum categories");
+      }
+
+      const categories: ForumCategory[] = await categoriesRes.json();
+
+      for (const category of categories) {
+        const threadsRes = await fetch(`/api/forum/categories/${category.id}/threads`);
+        if (!threadsRes.ok) continue;
+
+        const threads: ForumThreadSummary[] = await threadsRes.json();
+        const foundThread = threads.find((thread) => thread.slug === params.threadSlug);
+
+        if (foundThread) {
+          const threadDetailRes = await fetch(`/api/forum/threads/${foundThread.id}`);
+          if (!threadDetailRes.ok) {
+            throw new Error("Error loading thread");
+          }
+          return threadDetailRes.json();
+        }
+      }
+
+      throw new Error("Thread not found");
     },
   });
 

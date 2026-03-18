@@ -1,14 +1,22 @@
 const path = require("path");
+
 const frontendDir = __dirname;
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: ["class"],
   content: [
     path.join(frontendDir, "public", "index.html"),
     path.join(frontendDir, "src", "**", "*.{js,jsx,ts,tsx}"),
+    path.join(frontendDir, "..", "shared", "**", "*.{js,jsx,ts,tsx}"),
   ],
   theme: {
     extend: {
+      borderRadius: {
+        lg: ".5625rem", // 9px
+        md: ".375rem", // 6px
+        sm: ".1875rem", // 3px
+      },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
@@ -45,10 +53,24 @@ module.exports = {
         },
       },
       fontFamily: {
-        display: ['Inter', 'sans-serif'],
-        body: ['Roboto', 'sans-serif'],
+        display: ["Inter", "sans-serif"],
+        body: ["Roboto", "sans-serif"],
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
       },
     },
   },
-  plugins: [],
+  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 };

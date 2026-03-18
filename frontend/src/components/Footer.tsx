@@ -1,5 +1,5 @@
 import { useLanguage } from "@/lib/i18n";
-import { MapPin, Phone, Mail, Facebook, Instagram, Twitter, Youtube } from "lucide-react";
+import { MapPin, Phone, Mail } from "lucide-react";
 
 export function Footer() {
   const { t } = useLanguage();
@@ -33,8 +33,7 @@ export function Footer() {
             <h4 className="font-bold text-lg mb-4">Enlaces Rápidos</h4>
             <ul className="space-y-2 text-sm text-gray-400">
               <li><a href="/" className="hover:text-secondary transition-colors">Inicio</a></li>
-              <li><a href="/forum" className="hover:text-secondary transition-colors">Foro Estudiantil</a></li>
-              <li><a href="/upload" className="hover:text-secondary transition-colors">Compartir Recursos</a></li>
+              <li><a href="/login" className="hover:text-secondary transition-colors">Compartir Recursos</a></li>
               <li><a href="https://upy.edu.mx" target="_blank" rel="noopener noreferrer" className="hover:text-secondary transition-colors">Sitio Web UPY</a></li>
               <li><a href="https://upy.edu.mx/admision" target="_blank" rel="noopener noreferrer" className="hover:text-secondary transition-colors">Admisiones</a></li>
             </ul>
@@ -66,22 +65,6 @@ export function Footer() {
                 </a>
               </li>
             </ul>
-            
-            {/* Social Icons */}
-            <div className="flex gap-3 mt-6">
-              <a href="#" className="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center hover:bg-secondary transition-colors">
-                <Facebook className="w-4 h-4" />
-              </a>
-              <a href="#" className="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center hover:bg-secondary transition-colors">
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a href="#" className="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center hover:bg-secondary transition-colors">
-                <Twitter className="w-4 h-4" />
-              </a>
-              <a href="#" className="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center hover:bg-secondary transition-colors">
-                <Youtube className="w-4 h-4" />
-              </a>
-            </div>
           </div>
         </div>
 
@@ -90,8 +73,7 @@ export function Footer() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
             <p>© {currentYear} Universidad Politécnica de Yucatán. {t("footer_rights")}.</p>
             <div className="flex gap-6">
-              <a href="#" className="hover:text-secondary transition-colors">Aviso de Privacidad</a>
-              <a href="#" className="hover:text-secondary transition-colors">Términos de Uso</a>
+              <a href="https://upy.edu.mx" target="_blank" rel="noopener noreferrer" className="hover:text-secondary transition-colors">Sitio oficial UPY</a>
             </div>
           </div>
         </div>

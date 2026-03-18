@@ -397,15 +397,13 @@ export const updateUserProfileSchema = z.object({
   studentId: z.string().max(20).optional().or(z.literal(null)).nullable(),
   career: z.string().max(100).optional().or(z.literal(null)).nullable(),
 });
- 
-  id: true, 
+
+export const insertResourceSchema = createInsertSchema(resources).omit({
+  id: true,
   slug: true,
   viewCount: true,
   downloadCount: true,
-  isApproved: true,
-  approvedBy: true,
-  approvedAt: true,
-  createdAt: true, 
+  createdAt: true,
   updatedAt: true,
 });
 
@@ -447,17 +445,19 @@ export const searchSchema = z.object({
 // TYPE EXPORTS
 // ============================================================================
 
+type InferSchemaOutput<T> = T extends { _output: infer O } ? O : never;
+
 export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type UpdateUser = z.infer<typeof updateUserSchema>;
-export type LoginInput = z.infer<typeof loginSchema>;
+export type InsertUser = InferSchemaOutput<typeof insertUserSchema>;
+export type UpdateUser = InferSchemaOutput<typeof updateUserSchema>;
+export type LoginInput = InferSchemaOutput<typeof loginSchema>;
 
 export type Role = typeof roles.$inferSelect;
 export type UserRole = typeof userRoles.$inferSelect;
 
 export type Resource = typeof resources.$inferSelect;
-export type InsertResource = z.infer<typeof insertResourceSchema>;
-export type UpdateResource = z.infer<typeof updateResourceSchema>;
+export type InsertResource = InferSchemaOutput<typeof insertResourceSchema>;
+export type UpdateResource = InferSchemaOutput<typeof updateResourceSchema>;
 
 export type File = typeof files.$inferSelect;
 export type Category = typeof categories.$inferSelect;
@@ -465,13 +465,13 @@ export type Career = typeof careers.$inferSelect;
 
 export type ForumCategory = typeof forumCategories.$inferSelect;
 export type ForumThread = typeof forumThreads.$inferSelect;
-export type InsertThread = z.infer<typeof insertThreadSchema>;
+export type InsertThread = InferSchemaOutput<typeof insertThreadSchema>;
 export type ForumPost = typeof forumPosts.$inferSelect;
-export type InsertPost = z.infer<typeof insertPostSchema>;
+export type InsertPost = InferSchemaOutput<typeof insertPostSchema>;
 
 export type Notification = typeof notifications.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type Favorite = typeof favorites.$inferSelect;
 export type Download = typeof downloads.$inferSelect;
 export type Rating = typeof ratings.$inferSelect;
-export type SearchInput = z.infer<typeof searchSchema>;
+export type SearchInput = InferSchemaOutput<typeof searchSchema>;

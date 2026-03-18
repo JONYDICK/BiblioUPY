@@ -24,7 +24,7 @@ import ForumThread from "@/pages/forum/ForumThread";
 import CreateThread from "@/pages/forum/CreateThread";
 
 // Routes without default header/footer
-const standaloneRoutes = ["/login", "/register", "/forgot-password"];
+const standaloneRoutes = ["/login", "/register"];
 
 function Router() {
   const [location] = useLocation();

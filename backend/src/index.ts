@@ -43,12 +43,19 @@ app.use(securityLogger);
 app.use("/api", apiLimiter);
 
 // Get the directory of this file to resolve paths correctly
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const projectRoot = join(__dirname, "..", "..");
+let currentFilename: string;
+let currentDirname: string;
+try {
+  currentFilename = fileURLToPath(import.meta.url);
+  currentDirname = dirname(currentFilename);
+} catch {
+  // Fallback for CJS bundle (esbuild production build)
+  currentDirname = typeof __dirname !== "undefined" ? __dirname : process.cwd();
+}
+const projectRoot = process.env.NODE_ENV === "production" ? process.cwd() : join(currentDirname, "..", "..");
 
-// HTTPS configuration
-const useHttps = process.env.USE_HTTPS === "true" || process.env.NODE_ENV === "development";
+// HTTPS configuration (only for local dev, Render/production handles SSL)
+const useHttps = process.env.USE_HTTPS === "true" && process.env.NODE_ENV !== "production";
 const certPath = join(projectRoot, "certs");
 
 let httpServer;
@@ -128,16 +135,16 @@ function log(message: string, source = "express") {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
+  const host = process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1";
   const protocol = useHttps && existsSync(join(certPath, "cert.crt")) ? "https" : "http";
   httpServer.listen(
     {
       port,
-      host: "127.0.0.1"
+      host,
     },
     () => {
-      log(`Servidor iniciado en ${protocol}://127.0.0.1:${port}`);
-      console.log("\n[LISTO] Copia y pega este enlace en tu navegador para acceder:");
-      console.log(`${protocol}://127.0.0.1:${port}\n`);
+      log(`Servidor iniciado en ${protocol}://${host}:${port}`);
+      console.log(`\n[LISTO] Servidor escuchando en ${protocol}://${host}:${port}\n`);
     },
   );
 })();

@@ -2,13 +2,20 @@ import { useLanguage } from "@/lib/i18n";
 import { useResources, useCategoriesWithCounts, useCareersWithCounts, useResourceTypeCounts } from "@/hooks/use-resources";
 import { ResourceCard } from "@/components/ResourceCard";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Search, Loader2, Book, GraduationCap, FileText, Video, Cpu, Shield, Database, Cog, TrendingUp } from "lucide-react";
-import { Link } from "wouter";
-import { useState, useMemo } from "react";
+import { ArrowRight, Search, Loader2, Book, GraduationCap, FileText, Video, Cpu, Shield, Database, Cog, TrendingUp, LogIn, UserPlus } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { useState, useMemo, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // Icon mapping for categories
 const categoryIcons: Record<string, React.ElementType> = {
@@ -50,9 +57,40 @@ const careerIcons: Record<string, React.ElementType> = {
 
 export default function Home() {
   const { t } = useLanguage();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [location] = useLocation();
+  const urlParams = new URLSearchParams(location.split("?")[1] || "");
+  const urlSearch = urlParams.get("search") || "";
+
+  const [searchQuery, setSearchQuery] = useState(urlSearch);
   const [careerFilter, setCareerFilter] = useState<number | null>(null);
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+
+  const { data: user } = useQuery<{ id: number } | null>({
+    queryKey: ["me"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/auth/me", { credentials: "include" });
+        if (!res.ok) return null;
+        return res.json();
+      } catch {
+        return null;
+      }
+    },
+  });
+
+  const handleShareClick = () => {
+    if (user) {
+      setLocation("/upload");
+    } else {
+      setShowAuthDialog(true);
+    }
+  };
+
+  // Sync search query with URL params
+  useEffect(() => {
+    setSearchQuery(urlSearch);
+  }, [urlSearch]);
 
   // Fetch data from API
   const { data: resourcesData, isLoading: resourcesLoading } = useResources({
@@ -242,12 +280,10 @@ export default function Home() {
                 Mostrando <span className="font-semibold text-primary">{filteredResources.length}</span> de {totalResources} recursos
               </p>
             </div>
-            <Link href="/upload">
-              <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white gap-2">
-                Compartir Recurso
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
+            <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white gap-2" onClick={handleShareClick}>
+              Compartir Recurso
+              <ArrowRight className="w-4 h-4" />
+            </Button>
           </div>
 
           {resourcesLoading ? (
@@ -261,11 +297,9 @@ export default function Home() {
                 <Book className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 text-lg">{t("resources_empty")}</p>
                 <p className="text-gray-400 text-sm mt-2">Sé el primero en compartir un recurso</p>
-                <Link href="/upload">
-                  <Button className="mt-4 bg-primary hover:bg-primary/90">
-                    Subir Recurso
-                  </Button>
-                </Link>
+                <Button className="mt-4 bg-primary hover:bg-primary/90" onClick={handleShareClick}>
+                  Subir Recurso
+                </Button>
               </CardContent>
             </Card>
           ) : (
@@ -292,15 +326,59 @@ export default function Home() {
           <p className="text-white/80 mb-8 max-w-2xl mx-auto">
             Contribuye a la comunidad UPY compartiendo tus apuntes, libros y recursos académicos con otros estudiantes.
           </p>
-          <Link href="/upload">
-            <Button size="lg" className="bg-secondary hover:bg-secondary/90 text-white font-semibold px-8">
-              Compartir Recurso
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-          </Link>
+          <Button size="lg" className="bg-secondary hover:bg-secondary/90 text-white font-semibold px-8" onClick={handleShareClick}>
+            Compartir Recurso
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </Button>
         </div>
       </section>
 
+      {/* Auth Dialog */}
+      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl">Inicia sesión para compartir</DialogTitle>
+            <DialogDescription className="text-center">
+              Para subir y compartir recursos necesitas una cuenta en BiblioUPY.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 mt-4">
+            <Link href="/login">
+              <Button className="w-full gap-2" onClick={() => setShowAuthDialog(false)}>
+                <LogIn className="w-4 h-4" />
+                Iniciar Sesión
+              </Button>
+            </Link>
+            <Link href="/register">
+              <Button variant="outline" className="w-full gap-2" onClick={() => setShowAuthDialog(false)}>
+                <UserPlus className="w-4 h-4" />
+                Crear Cuenta
+              </Button>
+            </Link>
+            <div className="relative my-1">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-400">o continúa con</span>
+              </div>
+            </div>
+            <a
+              href="/api/auth/google"
+              className="flex w-full items-center justify-center gap-3 rounded-md border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
+              onClick={() => setShowAuthDialog(false)}
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+                <path d="M12.0003 4.75C13.7703 4.75 15.3553 5.36002 16.6053 6.54998L20.0303 3.125C17.9502 1.19 15.2353 0 12.0003 0C7.31028 0 3.25527 2.69 1.28027 6.60998L5.27028 9.70498C6.21525 6.86002 8.87028 4.75 12.0003 4.75Z" fill="#EA4335"/>
+                <path d="M23.49 12.275C23.49 11.49 23.415 10.73 23.3 10H12V14.51H18.47C18.18 15.99 17.34 17.25 16.08 18.1L19.945 21.1C22.2 19.01 23.49 15.92 23.49 12.275Z" fill="#4285F4"/>
+                <path d="M5.26498 14.2949C5.02498 13.5699 4.88501 12.7999 4.88501 11.9999C4.88501 11.1999 5.01998 10.4299 5.26498 9.7049L1.27498 6.60986C0.46498 8.22986 0 10.0599 0 11.9999C0 13.9399 0.46498 15.7699 1.28498 17.3899L5.26498 14.2949Z" fill="#FBBC05"/>
+                <path d="M12.0004 24.0001C15.2404 24.0001 17.9654 22.935 19.9454 21.095L16.0804 18.095C15.0054 18.82 13.6204 19.245 12.0004 19.245C8.8704 19.245 6.21537 17.135 5.2654 14.29L1.27539 17.385C3.25539 21.31 7.3104 24.0001 12.0004 24.0001Z" fill="#34A853"/>
+              </svg>
+              Continuar con Google
+            </a>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

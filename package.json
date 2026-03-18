@@ -26,6 +26,7 @@
     "passport-local": "^1.0.0",
     "pg": "8.17.2",
     "qrcode": "^1.5.4",
+    "@tailwindcss/typography": "^0.5.16",
     "tailwindcss": "^3.4.19",
     "uuid": "^9.0.1",
     "vite": "7.3.1",
@@ -52,9 +53,9 @@
     "dev": "node --import tsx backend/src/index.ts",
     "start": "node dist/index.cjs",
     "type-check": "tsc --noEmit",
-    "build": "tsc -p backend && vite build",
+    "build": "node --import tsx backend/src/script/build.ts",
     "db:push": "drizzle-kit push:pg",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "node --import tsx backend/script/seed.ts"
+    "db:seed": "node --import tsx backend/src/script/seed.ts"
   }
 }

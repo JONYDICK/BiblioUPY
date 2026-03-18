@@ -43,6 +43,7 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
+    port: 5173,
     https: httpsConfig,
     fs: {
       strict: true,

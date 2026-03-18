@@ -1,12 +1,18 @@
 import { Link, useLocation } from "wouter";
 import { useLanguage } from "@/lib/i18n";
-import { Menu, X, Globe, LogIn, UserPlus, User, Search, ChevronDown, Book, FileText, GraduationCap, Users, HelpCircle, MessageSquare, LogOut } from "lucide-react";
+import { Menu, X, LogIn, UserPlus, User, ChevronDown, Book, FileText, GraduationCap, Users, LogOut, Upload } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -26,10 +32,10 @@ interface User {
 
 export function Header() {
   const { language, toggleLanguage, t } = useLanguage();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -82,10 +88,11 @@ export function Header() {
     }
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Implement search
-    console.log("Searching:", searchQuery);
+  const handleShareClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault();
+      setShowAuthDialog(true);
+    }
   };
 
   return (
@@ -149,28 +156,10 @@ export function Header() {
                 </NavigationMenuItem>
 
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className="text-sm font-medium text-gray-700 hover:text-primary">
-                    Comunidad
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <div className="w-64 p-3 space-y-1">
-                      <Link href="/forum" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 hover:text-primary">
-                        <MessageSquare className="w-4 h-4" />
-                        Foro de Discusión
-                      </Link>
-                      <Link href="/upload" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50 text-sm text-gray-700 hover:text-primary">
-                        <Users className="w-4 h-4" />
-                        Compartir Recursos
-                      </Link>
-                    </div>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-
-                <NavigationMenuItem>
-                  <Link href="/help">
-                    <NavigationMenuLink className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-colors flex items-center gap-1">
-                      <HelpCircle className="w-4 h-4" />
-                      Ayuda
+                  <Link href="/upload" onClick={handleShareClick}>
+                    <NavigationMenuLink className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-1 ${location === "/upload" ? "text-primary bg-primary/5" : "text-gray-700 hover:text-primary hover:bg-gray-50"}`}>
+                      <Upload className="w-4 h-4" />
+                      Compartir
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
@@ -178,29 +167,8 @@ export function Header() {
             </NavigationMenu>
           </div>
 
-          {/* Search bar */}
-          <form onSubmit={handleSearch} className="hidden md:flex items-center">
-            <div className="relative">
-              <Input
-                type="text"
-                placeholder="Buscar recursos..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-64 pl-10 pr-4 py-2 rounded-full border-gray-200 bg-gray-50 text-sm focus:bg-white focus:border-primary"
-              />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            </div>
-          </form>
-
           {/* Right side actions */}
           <div className="hidden md:flex items-center gap-2">
-            <button
-              onClick={toggleLanguage}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium text-gray-600 hover:text-primary hover:bg-gray-50 transition-colors"
-            >
-              <Globe className="w-3.5 h-3.5" />
-              {language.toUpperCase()}
-            </button>
 
             {!isLoading && (
               <>
@@ -288,27 +256,10 @@ export function Header() {
             className="lg:hidden bg-white border-t border-gray-100 overflow-hidden"
           >
             <div className="px-4 py-4 space-y-2">
-              {/* Mobile Search */}
-              <form onSubmit={handleSearch} className="mb-4">
-                <div className="relative">
-                  <Input
-                    type="text"
-                    placeholder="Buscar recursos..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border-gray-200 bg-gray-50"
-                  />
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                </div>
-              </form>
-
               <Link href="/" className="block px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 font-medium" onClick={() => setIsMobileMenuOpen(false)}>
                 Inicio
               </Link>
-              <Link href="/forum" className="block px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 font-medium" onClick={() => setIsMobileMenuOpen(false)}>
-                Foro
-              </Link>
-              <Link href="/upload" className="block px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 font-medium" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link href={user ? "/upload" : "#"} className="block px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 font-medium" onClick={(e) => { if (!user) { e.preventDefault(); setShowAuthDialog(true); } setIsMobileMenuOpen(false); }}>
                 Compartir Recursos
               </Link>
               
@@ -345,6 +296,53 @@ export function Header() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Auth Dialog for unauthenticated users trying to share */}
+      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl">Inicia sesión para compartir</DialogTitle>
+            <DialogDescription className="text-center">
+              Para subir y compartir recursos necesitas una cuenta en BiblioUPY.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 mt-4">
+            <Link href="/login" onClick={() => setShowAuthDialog(false)}>
+              <Button className="w-full gap-2" variant="default">
+                <LogIn className="w-4 h-4" />
+                Iniciar Sesión
+              </Button>
+            </Link>
+            <Link href="/register" onClick={() => setShowAuthDialog(false)}>
+              <Button className="w-full gap-2 bg-secondary hover:bg-secondary/90 text-white">
+                <UserPlus className="w-4 h-4" />
+                Crear Cuenta
+              </Button>
+            </Link>
+            <div className="relative my-1">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-400">o continúa con</span>
+              </div>
+            </div>
+            <a
+              href="/api/auth/google"
+              className="flex w-full items-center justify-center gap-3 rounded-md border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
+              onClick={() => setShowAuthDialog(false)}
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+                <path d="M12.0003 4.75C13.7703 4.75 15.3553 5.36002 16.6053 6.54998L20.0303 3.125C17.9502 1.19 15.2353 0 12.0003 0C7.31028 0 3.25527 2.69 1.28027 6.60998L5.27028 9.70498C6.21525 6.86002 8.87028 4.75 12.0003 4.75Z" fill="#EA4335"/>
+                <path d="M23.49 12.275C23.49 11.49 23.415 10.73 23.3 10H12V14.51H18.47C18.18 15.99 17.34 17.25 16.08 18.1L19.945 21.1C22.2 19.01 23.49 15.92 23.49 12.275Z" fill="#4285F4"/>
+                <path d="M5.26498 14.2949C5.02498 13.5699 4.88501 12.7999 4.88501 11.9999C4.88501 11.1999 5.01998 10.4299 5.26498 9.7049L1.27498 6.60986C0.46498 8.22986 0 10.0599 0 11.9999C0 13.9399 0.46498 15.7699 1.28498 17.3899L5.26498 14.2949Z" fill="#FBBC05"/>
+                <path d="M12.0004 24.0001C15.2404 24.0001 17.9654 22.935 19.9454 21.095L16.0804 18.095C15.0054 18.82 13.6204 19.245 12.0004 19.245C8.8704 19.245 6.21537 17.135 5.2654 14.29L1.27539 17.385C3.25539 21.31 7.3104 24.0001 12.0004 24.0001Z" fill="#34A853"/>
+              </svg>
+              Continuar con Google
+            </a>
+          </div>
+        </DialogContent>
+      </Dialog>
     </header>
   );
 }

@@ -561,7 +561,9 @@ export async function registerRoutes(
         or(
           ilike(resources.title, `%${search}%`),
           ilike(resources.description, `%${search}%`),
-          ilike(resources.author, `%${search}%`)
+          ilike(resources.author, `%${search}%`),
+          ilike(resources.isbn, `%${search}%`),
+          ilike(resources.publisher, `%${search}%`)
         ) as any
       );
     }
@@ -1179,7 +1181,9 @@ export async function registerRoutes(
         or(
           ilike(resources.title, `%${input.query}%`),
           ilike(resources.description, `%${input.query}%`),
-          ilike(resources.author, `%${input.query}%`)
+          ilike(resources.author, `%${input.query}%`),
+          ilike(resources.isbn, `%${input.query}%`),
+          ilike(resources.publisher, `%${input.query}%`)
         )!
       );
 
