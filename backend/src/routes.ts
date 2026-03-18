@@ -87,16 +87,30 @@ export async function registerRoutes(
         return res.status(400).json({ message: "El nombre de usuario ya está registrado" });
       }
 
-      // Validate student role exists
-      const studentRoleResult = await db
+      // Validate student role exists, create if missing (self-healing)
+      let studentRoleResult = await db
         .select()
         .from(roles)
         .where(eq(roles.name, "student"))
         .limit(1);
 
       if (studentRoleResult.length === 0) {
-        console.error("[auth] El rol 'student' no existe en la base de datos");
-        return res.status(500).json({ message: "Configuración del sistema incompleta. El rol 'student' no existe." });
+        console.warn("[auth] Rol 'student' no existe, creándolo automáticamente...");
+        try {
+          await seedDefaultRoles();
+          studentRoleResult = await db.select().from(roles).where(eq(roles.name, "student")).limit(1);
+        } catch (seedErr) {
+          console.error("[auth] Error creando roles:", seedErr);
+        }
+        if (studentRoleResult.length === 0) {
+          // Last resort: create just the student role
+          await db.insert(roles).values({
+            name: "student",
+            description: "Estudiante",
+            permissions: ["upload_resources", "download_resources", "create_forum_threads", "comment_forum"],
+          });
+          console.log("[auth] Rol 'student' creado directamente");
+        }
       }
 
       const user = await createUser({
