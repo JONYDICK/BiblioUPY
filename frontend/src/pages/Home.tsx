@@ -57,7 +57,7 @@ const careerIcons: Record<string, React.ElementType> = {
 
 export default function Home() {
   const { t } = useLanguage();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const urlParams = new URLSearchParams(location.split("?")[1] || "");
   const urlSearch = urlParams.get("search") || "";
 

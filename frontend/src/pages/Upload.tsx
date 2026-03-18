@@ -311,21 +311,23 @@ export default function Upload() {
 
         setUploadProgress(100);
       } else {
-        // Create resource with external URL
+        // Create resource with external URL (using FormData to match backend's multipart expectation)
+        const formData = new FormData();
+        formData.append("data", JSON.stringify({
+          title,
+          description,
+          type,
+          externalUrl,
+          categoryId: category ? parseInt(category) : null,
+          careerId: career ? parseInt(career) : null,
+          author: author || null,
+          publicationYear: publicationYear ? parseInt(publicationYear) : null,
+        }));
+
         const res = await fetch("/api/resources", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({
-            title,
-            description,
-            type,
-            link: externalUrl,
-            career: careers.find(c => c.id.toString() === career)?.name || "General",
-            topic: "General",
-            theme: "General",
-            purpose: "Reference",
-          }),
+          body: formData,
         });
 
         if (!res.ok) {
