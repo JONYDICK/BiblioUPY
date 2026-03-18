@@ -134,6 +134,18 @@ export async function registerRoutes(
       (req.session as any).pendingMfaSecret = mfaSecret;
       (req.session as any).pendingMfaUserId = user.id;
 
+      // Explicitly save session to ensure cookie is sent before responding
+      await new Promise<void>((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) {
+            console.error("[auth] Error guardando sesión:", err);
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      });
+
       await logAudit(user.id, "register", "user", user.id, null, null, req);
 
       console.log("[auth] ✓ Usuario registrado. Esperando confirmación de MFA...");

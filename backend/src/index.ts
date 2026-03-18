@@ -20,6 +20,12 @@ console.log("[startup] ✓ Environment variables validated");
 
 const app = express();
 
+// Trust proxy (required for Render.com and similar PaaS behind reverse proxies)
+// Without this, secure cookies won't be set because Express sees HTTP, not HTTPS
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
 // Compression middleware (significantly reduces response size)
 app.use(compression());
 
