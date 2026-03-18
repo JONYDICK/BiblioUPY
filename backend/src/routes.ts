@@ -265,7 +265,11 @@ export async function registerRoutes(
       }
       
       logAudit(userId, "logout", "user", userId, null, null, req);
-      res.json({ message: "Sesión cerrada" });
+      req.session.destroy((destroyErr) => {
+        if (destroyErr) console.error("[auth] Error destroying session:", destroyErr);
+        res.clearCookie("connect.sid");
+        res.json({ message: "Sesión cerrada" });
+      });
     });
   });
 
@@ -308,18 +312,21 @@ export async function registerRoutes(
       // Log the action
       await logAudit(pendingUserId, "mfa_confirmed", "user", pendingUserId, null, null, req);
 
-      // Clear session
+      // Clear session and save before responding
       delete (req.session as any).pendingMfaSecret;
       delete (req.session as any).pendingMfaUserId;
 
       console.log("[auth] ✓ MFA confirmado para usuario:", verifiedUser.email);
-      res.status(200).json({
-        message: "¡MFA confirmado correctamente! Ya puedes iniciar sesión.",
-        user: {
-          id: verifiedUser.id,
-          email: verifiedUser.email,
-          username: verifiedUser.username
-        }
+      req.session.save((saveErr) => {
+        if (saveErr) console.error("[auth] Error saving session:", saveErr);
+        res.status(200).json({
+          message: "¡MFA confirmado correctamente! Ya puedes iniciar sesión.",
+          user: {
+            id: verifiedUser.id,
+            email: verifiedUser.email,
+            username: verifiedUser.username
+          }
+        });
       });
     } catch (err) {
       console.error("[auth] Error confirmando MFA:", err instanceof Error ? err.message : String(err));
@@ -593,7 +600,10 @@ export async function registerRoutes(
 
     await logAudit(user.id, "mfa_enabled", "user", user.id, null, null, req);
 
-    res.json({ message: "MFA habilitado exitosamente" });
+    req.session.save((saveErr) => {
+      if (saveErr) console.error("[auth] Error saving session:", saveErr);
+      res.json({ message: "MFA habilitado exitosamente" });
+    });
   });
 
   // Disable MFA
@@ -756,10 +766,10 @@ export async function registerRoutes(
       ipAddress: req.ip,
     });
 
-    // Increment view count
+    // Increment view count (atomic SQL increment to avoid race condition)
     await db
       .update(resources)
-      .set({ viewCount: resource.viewCount + 1 })
+      .set({ viewCount: sql`${resources.viewCount} + 1` })
       .where(eq(resources.id, resource.id));
 
     res.json(resource);
@@ -792,9 +802,8 @@ export async function registerRoutes(
       res.setHeader("X-Frame-Options", "SAMEORIGIN");
       res.setHeader("Content-Security-Policy", "frame-ancestors 'self'");
       
-      // CORS headers
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Access-Control-Allow-Credentials", "true");
+      // CORS headers - use same-origin since we proxy through our server
+      res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
       
       if (resource.storageType === "s3") {
         const { getFileStreamFromS3 } = await import("./s3");
@@ -863,10 +872,10 @@ export async function registerRoutes(
       ipAddress: req.ip,
     });
 
-    // Increment download count
+    // Increment download count (atomic SQL increment to avoid race condition)
     await db
       .update(resources)
-      .set({ downloadCount: resource.downloadCount + 1 })
+      .set({ downloadCount: sql`${resources.downloadCount} + 1` })
       .where(eq(resources.id, resource.id));
 
     // Generate download URL based on storage type
@@ -960,9 +969,22 @@ export async function registerRoutes(
       return res.status(403).json({ message: "No autorizado" });
     }
 
+    // Whitelist allowed fields to prevent mass assignment
+    const { title, description, type, author, publicationYear, publisher, language, keywords, externalUrl } = req.body;
+    const allowedUpdates: Record<string, any> = { updatedAt: new Date() };
+    if (title !== undefined) allowedUpdates.title = sanitizeTextWithLimit(title, 500);
+    if (description !== undefined) allowedUpdates.description = sanitizeHtml(description);
+    if (type !== undefined) allowedUpdates.type = type;
+    if (author !== undefined) allowedUpdates.author = sanitizeTextWithLimit(author, 255);
+    if (publicationYear !== undefined) allowedUpdates.publicationYear = publicationYear;
+    if (publisher !== undefined) allowedUpdates.publisher = sanitizeTextWithLimit(publisher, 255);
+    if (language !== undefined) allowedUpdates.language = language;
+    if (keywords !== undefined) allowedUpdates.keywords = keywords;
+    if (externalUrl !== undefined) allowedUpdates.externalUrl = externalUrl;
+
     const [updated] = await db
       .update(resources)
-      .set({ ...req.body, updatedAt: new Date() })
+      .set(allowedUpdates)
       .where(eq(resources.id, parseInt(id)))
       .returning();
 
@@ -1079,6 +1101,13 @@ export async function registerRoutes(
         size: file.size,
       });
     } catch (err: any) {
+      // Cleanup local file on error
+      if (req.file) {
+        try {
+          const fsCleanup = await import("fs/promises");
+          await fsCleanup.unlink(req.file.path);
+        } catch {}
+      }
       console.error("[s3] Upload error:", err);
       res.status(400).json({ message: err.message || "Error al subir archivo" });
     }

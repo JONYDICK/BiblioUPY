@@ -4,7 +4,7 @@ import { ResourceCard } from "@/components/ResourceCard";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Search, Loader2, Book, GraduationCap, FileText, Video, Cpu, Shield, Database, Cog, TrendingUp, LogIn, UserPlus } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -108,16 +108,7 @@ export default function Home() {
   const totalResources = resourcesData?.total || 0;
   const resources = resourcesData?.resources || [];
 
-  // Filter resources by search (client side for instant feedback)
-  const filteredResources = useMemo(() => {
-    if (!searchQuery) return resources;
-    const query = searchQuery.toLowerCase();
-    return resources.filter(r => 
-      r.title.toLowerCase().includes(query) ||
-      r.description?.toLowerCase().includes(query) ||
-      r.author?.toLowerCase().includes(query)
-    );
-  }, [resources, searchQuery]);
+  // Resources are already filtered by the API - use them directly\n  const filteredResources = resources;
 
   // Get count for a type
   const getTypeCount = (type: string) => {

@@ -249,12 +249,16 @@ export function configureSession(app: Express) {
             // Generate MFA secret for new OAuth users (mandatory)
             const mfaSecret = generateMfaSecret();
 
+            // Generate a random unguessable password hash for OAuth users
+            const randomPassword = crypto.randomBytes(32).toString("hex");
+            const oauthPasswordHash = await hashPassword(randomPassword);
+
             const [newUser] = await db
               .insert(users)
               .values({
                 email,
                 username: `${username}_${Date.now().toString(36)}`, // Ensure unique username
-                passwordHash: "", // No password for OAuth users
+                passwordHash: oauthPasswordHash, // Random hash - OAuth users can't login with password
                 firstName: firstName || "",
                 lastName: lastName,
                 googleId: profile.id,
