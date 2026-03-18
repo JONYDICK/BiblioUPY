@@ -7,13 +7,22 @@ import fs from "fs";
 // import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 let baseDir: string;
-try {
-  baseDir = typeof __dirname !== "undefined"
-    ? __dirname
-    : dirname(fileURLToPath(import.meta.url));
-} catch {
-  // Fallback: use process.cwd() + frontend path
+// Detect if running from frontend/ or project root
+if (fs.existsSync(path.resolve(process.cwd(), "frontend", "src", "App.tsx"))) {
+  // Running from project root (build script or Render)
   baseDir = path.resolve(process.cwd(), "frontend");
+} else if (fs.existsSync(path.resolve(process.cwd(), "src", "App.tsx"))) {
+  // Running from frontend/ directly
+  baseDir = process.cwd();
+} else {
+  // Fallback: try __dirname or import.meta.url
+  try {
+    baseDir = typeof __dirname !== "undefined"
+      ? __dirname
+      : dirname(fileURLToPath(import.meta.url));
+  } catch {
+    baseDir = path.resolve(process.cwd(), "frontend");
+  }
 }
 
 // HTTPS configuration for development
