@@ -780,12 +780,14 @@ export async function registerRoutes(
     try {
       const resourceId = parseInt(req.params.id);
       
+      // Only serve files for approved/public resources
       const [resource] = await db
         .select({
           filePath: files.path,
           fileName: files.originalName,
           mimeType: files.mimeType,
           storageType: files.storageType,
+          isApproved: resources.isApproved,
         })
         .from(resources)
         .innerJoin(files, eq(resources.fileId, files.id))
@@ -794,6 +796,10 @@ export async function registerRoutes(
 
       if (!resource || !resource.filePath) {
         return res.status(404).json({ message: "Archivo no encontrado" });
+      }
+
+      if (!resource.isApproved) {
+        return res.status(403).json({ message: "Recurso pendiente de aprobación" });
       }
 
       // IMPORTANTE: Sobrescribir headers de seguridad para permitir iframe
@@ -1206,7 +1212,7 @@ export async function registerRoutes(
           fileId: fileRecord.id,
           uploadedBy: user.id,
           isPublic: true,
-          isApproved: true, // Auto-approved for prototype
+          isApproved: false, // Requires admin approval
         })
         .returning();
 
@@ -1641,11 +1647,11 @@ export async function registerRoutes(
         // Remove vote
         await db.delete(forumVotes).where(eq(forumVotes.id, existingVote.id));
         
-        const field = voteType === "up" ? "upvotes" : "downvotes";
-        await db
-          .update(forumPosts)
-          .set({ [field]: sql`${forumPosts[field]} - 1` })
-          .where(eq(forumPosts.id, parseInt(postId)));
+        if (voteType === "up") {
+          await db.update(forumPosts).set({ upvotes: sql`${forumPosts.upvotes} - 1` }).where(eq(forumPosts.id, parseInt(postId)));
+        } else {
+          await db.update(forumPosts).set({ downvotes: sql`${forumPosts.downvotes} - 1` }).where(eq(forumPosts.id, parseInt(postId)));
+        }
         
         return res.json({ message: "Voto eliminado" });
       } else {
@@ -1655,15 +1661,17 @@ export async function registerRoutes(
           .set({ voteType })
           .where(eq(forumVotes.id, existingVote.id));
         
-        const addField = voteType === "up" ? "upvotes" : "downvotes";
-        const removeField = voteType === "up" ? "downvotes" : "upvotes";
-        await db
-          .update(forumPosts)
-          .set({
-            [addField]: sql`${forumPosts[addField]} + 1`,
-            [removeField]: sql`${forumPosts[removeField]} - 1`,
-          })
-          .where(eq(forumPosts.id, parseInt(postId)));
+        if (voteType === "up") {
+          await db.update(forumPosts).set({
+            upvotes: sql`${forumPosts.upvotes} + 1`,
+            downvotes: sql`${forumPosts.downvotes} - 1`,
+          }).where(eq(forumPosts.id, parseInt(postId)));
+        } else {
+          await db.update(forumPosts).set({
+            downvotes: sql`${forumPosts.downvotes} + 1`,
+            upvotes: sql`${forumPosts.upvotes} - 1`,
+          }).where(eq(forumPosts.id, parseInt(postId)));
+        }
         
         return res.json({ message: "Voto actualizado" });
       }
@@ -1676,11 +1684,11 @@ export async function registerRoutes(
       voteType,
     });
 
-    const field = voteType === "up" ? "upvotes" : "downvotes";
-    await db
-      .update(forumPosts)
-      .set({ [field]: sql`${forumPosts[field]} + 1` })
-      .where(eq(forumPosts.id, parseInt(postId)));
+    if (voteType === "up") {
+      await db.update(forumPosts).set({ upvotes: sql`${forumPosts.upvotes} + 1` }).where(eq(forumPosts.id, parseInt(postId)));
+    } else {
+      await db.update(forumPosts).set({ downvotes: sql`${forumPosts.downvotes} + 1` }).where(eq(forumPosts.id, parseInt(postId)));
+    }
 
     res.json({ message: "Voto registrado" });
   });

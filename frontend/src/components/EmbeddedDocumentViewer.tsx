@@ -73,10 +73,10 @@ export function EmbeddedDocumentViewer({
 
   // Reset states when fileUrl changes
   useEffect(() => {
+    setIsLoading(true);
+    setHasError(false);
+    setErrorMessage("");
     if (fileType === "pdf") {
-      setIsLoading(true);
-      setHasError(false);
-      setErrorMessage("");
       setNumPages(0);
       setCurrentPage(1);
     }

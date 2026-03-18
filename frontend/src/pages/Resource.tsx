@@ -84,7 +84,7 @@ export default function Resource() {
       if (!res.ok) throw new Error("No se pudo cargar el recurso");
       return res.json();
     },
-    enabled: !!id,
+    enabled: !!id && /^\d+$/.test(id),
   });
 
   const handleDownload = async () => {

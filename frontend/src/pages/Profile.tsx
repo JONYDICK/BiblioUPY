@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -39,6 +39,8 @@ export default function Profile() {
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -243,6 +245,7 @@ export default function Profile() {
             <input
               type="file"
               accept="image/*"
+              ref={bannerInputRef}
               onChange={handleBannerSelect}
               className="hidden"
               disabled={uploadingBanner}
@@ -253,8 +256,7 @@ export default function Profile() {
               disabled={uploadingBanner}
               onClick={(e) => {
                 e.preventDefault();
-                const input = document.querySelector("input[type='file']") as HTMLInputElement;
-                input?.click();
+                bannerInputRef.current?.click();
               }}
               className="gap-2"
             >
@@ -289,6 +291,7 @@ export default function Profile() {
                 <input
                   type="file"
                   accept="image/*"
+                  ref={avatarInputRef}
                   onChange={handleAvatarSelect}
                   className="hidden"
                   disabled={uploadingAvatar}
@@ -299,8 +302,7 @@ export default function Profile() {
                   disabled={uploadingAvatar}
                   onClick={(e) => {
                     e.preventDefault();
-                    const input = document.querySelectorAll("input[type='file']")[0] as HTMLInputElement;
-                    input?.click();
+                    avatarInputRef.current?.click();
                   }}
                   className="gap-1 rounded-full p-2 h-10 w-10"
                 >

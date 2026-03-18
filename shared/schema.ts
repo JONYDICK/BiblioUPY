@@ -431,7 +431,7 @@ export const insertPostSchema = createInsertSchema(forumPosts).omit({
 });
 
 export const searchSchema = z.object({
-  query: z.string().min(2, "La búsqueda debe tener al menos 2 caracteres"),
+  query: z.string().min(2, "La búsqueda debe tener al menos 2 caracteres").max(500, "La búsqueda es demasiado larga"),
   type: z.enum(["all", "pdf", "book", "thesis", "article", "document"]).optional(),
   categoryId: z.number().optional(),
   careerId: z.number().optional(),
