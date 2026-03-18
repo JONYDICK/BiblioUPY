@@ -4,13 +4,15 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import { BookOpen, Eye, EyeOff, UserPlus, Check } from "lucide-react";
+import { BookOpen, Eye, EyeOff, UserPlus, Check, ShieldCheck, Copy, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 const registerSchema = z.object({
@@ -40,7 +42,15 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+
+  // MFA setup state
+  const [mfaStep, setMfaStep] = useState(false);
+  const [mfaQrCode, setMfaQrCode] = useState("");
+  const [mfaSecret, setMfaSecret] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [mfaError, setMfaError] = useState<string | null>(null);
+  const [mfaSuccess, setMfaSuccess] = useState(false);
+  const [secretCopied, setSecretCopied] = useState(false);
 
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
@@ -84,13 +94,37 @@ export default function Register() {
       if (!res.ok) throw new Error(result.message);
       return result;
     },
-    onSuccess: () => {
-      setSuccess(true);
+    onSuccess: (data) => {
       setError(null);
-      setTimeout(() => navigate("/login"), 2000);
+      setMfaQrCode(data.mfaQrCode);
+      setMfaSecret(data.mfaSecret);
+      setMfaStep(true);
     },
     onError: (err: Error) => {
       setError(err.message);
+    },
+  });
+
+  const confirmMfaMutation = useMutation({
+    mutationFn: async (mfaToken: string) => {
+      const res = await fetch("/api/auth/confirm-mfa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ mfaToken }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message);
+      return result;
+    },
+    onSuccess: () => {
+      setMfaError(null);
+      setMfaSuccess(true);
+      setTimeout(() => navigate("/login"), 2000);
+    },
+    onError: (err: Error) => {
+      setMfaError(err.message);
+      setOtpCode("");
     },
   });
 
@@ -99,27 +133,20 @@ export default function Register() {
     registerMutation.mutate(data);
   };
 
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="text-center"
-        >
-          <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Check className="w-10 h-10 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold text-green-600 mb-2">
-            ¡Cuenta creada exitosamente!
-          </h2>
-          <p className="text-gray-600">Redirigiendo al inicio de sesión...</p>
-        </motion.div>
-      </div>
-    );
-  }
+  const handleConfirmMfa = () => {
+    if (otpCode.length !== 6) return;
+    setMfaError(null);
+    confirmMfaMutation.mutate(otpCode);
+  };
+
+  const handleCopySecret = async () => {
+    await navigator.clipboard.writeText(mfaSecret);
+    setSecretCopied(true);
+    setTimeout(() => setSecretCopied(false), 2000);
+  };
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 py-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -386,5 +413,127 @@ export default function Register() {
         </p>
       </motion.div>
     </div>
+
+    {/* MFA Setup Modal — mandatory, cannot be dismissed */}
+    <Dialog open={mfaStep} onOpenChange={() => {/* prevent closing */}}>
+      <DialogContent
+        className="sm:max-w-md [&>button:last-child]:hidden"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        // Hide the default close button
+        onInteractOutside={(e) => e.preventDefault()}
+      >
+        {mfaSuccess ? (
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-center py-6"
+          >
+            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Check className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-green-600 mb-2">
+              ¡MFA configurado correctamente!
+            </h3>
+            <p className="text-gray-600 text-sm">Redirigiendo al inicio de sesión...</p>
+          </motion.div>
+        ) : (
+          <>
+            <DialogHeader className="text-center">
+              <div className="flex justify-center mb-2">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <ShieldCheck className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+              <DialogTitle className="text-xl">Configura tu autenticación MFA</DialogTitle>
+              <DialogDescription className="text-sm">
+                Escanea el código QR con tu app de autenticación (Google Authenticator, Authy, etc.) e ingresa el código de 6 dígitos.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-2">
+              {/* QR Code */}
+              <div className="flex justify-center">
+                <div className="bg-white p-3 rounded-lg border shadow-sm">
+                  <img
+                    src={mfaQrCode}
+                    alt="Código QR para MFA"
+                    className="w-48 h-48"
+                  />
+                </div>
+              </div>
+
+              {/* Manual secret */}
+              <div className="space-y-1">
+                <p className="text-xs text-gray-500 text-center">¿No puedes escanear? Ingresa este código manualmente:</p>
+                <div className="flex items-center gap-2 justify-center">
+                  <code className="bg-gray-100 px-3 py-1.5 rounded text-sm font-mono tracking-wider select-all">
+                    {mfaSecret}
+                  </code>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopySecret}
+                    className="h-8 px-2"
+                  >
+                    {secretCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+
+              {/* OTP Input */}
+              <div className="space-y-2">
+                <Label className="text-center block text-sm font-medium">Código de verificación</Label>
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={6}
+                    value={otpCode}
+                    onChange={setOtpCode}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+              </div>
+
+              {mfaError && (
+                <Alert variant="destructive">
+                  <AlertDescription>{mfaError}</AlertDescription>
+                </Alert>
+              )}
+
+              <Button
+                onClick={handleConfirmMfa}
+                disabled={otpCode.length !== 6 || confirmMfaMutation.isPending}
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+              >
+                {confirmMfaMutation.isPending ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Verificando...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4" />
+                    Confirmar MFA
+                  </span>
+                )}
+              </Button>
+
+              <p className="text-xs text-gray-400 text-center">
+                Este paso es obligatorio para completar tu registro.
+              </p>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
