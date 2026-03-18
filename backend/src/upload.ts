@@ -5,7 +5,7 @@ import crypto from "crypto";
 import { Request, Response, NextFunction } from "express";
 import { db } from "./db";
 import { files, resources, downloads } from "../../shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 // ============================================================================
 // CONFIGURATION
@@ -238,10 +238,10 @@ export async function serveSecureFile(
       userAgent: req.get("user-agent"),
     });
 
-    // Increment download count
+    // Increment download count (atomic)
     await db
       .update(resources)
-      .set({ downloadCount: resource.downloadCount + 1 })
+      .set({ downloadCount: sql`${resources.downloadCount} + 1` })
       .where(eq(resources.id, resource.id));
   }
 

@@ -27,6 +27,9 @@ const ALLOWED_MIME_TYPES = [
   "image/png",
   "image/gif",
   "image/webp",
+  "video/mp4",
+  "video/webm",
+  "video/ogg",
 ];
 
 // Tamaño máximo: 100MB
@@ -75,6 +78,7 @@ export async function generateUploadPresignedUrl(
     Bucket: BUCKET_NAME,
     Key: key,
     ContentType: contentType,
+    ContentLength: size,
     Metadata: {
       "uploaded-by": String(userId),
       "original-filename": filename,
@@ -85,7 +89,7 @@ export async function generateUploadPresignedUrl(
   const expiresIn = 15 * 60;
   const uploadUrl = await getSignedUrl(s3Client, command, { 
     expiresIn,
-    signableHeaders: new Set(["host", "content-type"]),
+    signableHeaders: new Set(["host", "content-type", "content-length"]),
   });
 
   return {

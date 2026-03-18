@@ -32,8 +32,13 @@ app.use(compression());
 // HTTP Caching headers
 app.use((req: Request, res: Response, next: NextFunction) => {
   if (req.method === "GET") {
-    // Cache public GET requests for 5 minutes
-    res.set("Cache-Control", "public, max-age=300, must-revalidate");
+    if (req.path.startsWith("/api/")) {
+      // Don't cache authenticated API responses
+      res.set("Cache-Control", "no-store, private");
+    } else {
+      // Cache static assets for 5 minutes
+      res.set("Cache-Control", "public, max-age=300, must-revalidate");
+    }
   } else {
     // Don't cache state-changing operations
     res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");

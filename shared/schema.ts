@@ -364,7 +364,11 @@ export const insertUserSchema = z.object({
   username: z.string().min(3, "Username mínimo 3 caracteres").max(50),
   firstName: z.string().min(1, "Nombre requerido"),
   lastName: z.string().min(1, "Apellido requerido"),
-  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
+  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres")
+    .regex(/[A-Z]/, "Debe contener al menos una mayúscula")
+    .regex(/[a-z]/, "Debe contener al menos una minúscula")
+    .regex(/[0-9]/, "Debe contener al menos un número")
+    .regex(/[^A-Za-z0-9]/, "Debe contener al menos un carácter especial"),
   confirmPassword: z.string().min(1, "Debe confirmar la contraseña"),
   studentId: z.string().optional(),
   career: z.string().optional(),

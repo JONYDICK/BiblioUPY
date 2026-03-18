@@ -89,8 +89,6 @@ export default function Profile() {
   // Upload to S3 with presigned URL
   const uploadImageToS3 = async (file: File, type: "avatar" | "banner") => {
     try {
-      const type_param = type === "avatar" ? "profile_avatar" : "profile_banner";
-
       // Generate presigned URL
       const presignRes = await fetch("/api/uploads/presign", {
         method: "POST",
@@ -98,8 +96,8 @@ export default function Profile() {
         credentials: "include",
         body: JSON.stringify({
           filename: file.name,
-          mimetype: file.type,
-          type: type_param,
+          contentType: file.type,
+          size: file.size,
         }),
       });
 
@@ -107,10 +105,10 @@ export default function Profile() {
         throw new Error("Error generando URL de subida");
       }
 
-      const { presignedUrl, s3Url } = await presignRes.json();
+      const { uploadUrl, key } = await presignRes.json();
 
       // Upload to S3
-      const uploadRes = await fetch(presignedUrl, {
+      const uploadRes = await fetch(uploadUrl, {
         method: "PUT",
         headers: {
           "Content-Type": file.type,
@@ -122,7 +120,10 @@ export default function Profile() {
         throw new Error("Error subiendo imagen a S3");
       }
 
-      return s3Url;
+      // Return the S3 URL constructed from the key
+      const bucket = import.meta.env.VITE_S3_BUCKET || "biblioupy-files";
+      const region = import.meta.env.VITE_S3_REGION || "us-east-1";
+      return `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
     } catch (error) {
       console.error("[Profile] Error uploading to S3:", error);
       throw error;

@@ -29,6 +29,11 @@ import {
 } from "./middleware/rateLimit";
 import { sanitizeHtml, sanitizeText, sanitizeTextWithLimit, sanitizeEmail } from "./utils/sanitize";
 
+// Escape LIKE wildcards in user input to prevent unintended pattern matching
+function escapeLike(input: string): string {
+  return input.replace(/%/g, '\\%').replace(/_/g, '\\_');
+}
+
 // Slug generator
 function generateSlug(text: string): string {
   return text
@@ -175,7 +180,7 @@ export async function registerRoutes(
         message: "Cuenta creada. Escanea el código QR con tu app de autenticación (Google Authenticator, Authy, etc.)",
         user: { id: user.id, email: user.email, username: user.username },
         mfaQrCode: mfaQrCode,
-        mfaSecret: mfaSecret
+        mfaSecret: mfaSecret,
       });
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -220,7 +225,7 @@ export async function registerRoutes(
             return res.status(200).json({ requiresMfa: true, message: "Se requiere código MFA" });
           }
 
-          if (!verifyMfaToken(mfaToken, user.mfaSecret || "")) {
+          if (!(await verifyMfaToken(mfaToken, user.mfaSecret || ""))) {
             return res.status(401).json({ message: "Código MFA inválido" });
           }
         }
@@ -233,22 +238,30 @@ export async function registerRoutes(
           await updateLastLogin(user.id);
           await logAudit(user.id, "login", "user", user.id, null, null, req);
 
-          // Explicitly save session before responding
-          req.session.save((saveErr) => {
-            if (saveErr) {
-              console.error("[auth] Error saving session:", saveErr);
+          // Regenerate session to prevent session fixation
+          const sessionData = { ...req.session };
+          req.session.regenerate((regenErr) => {
+            if (regenErr) {
+              console.error("[auth] Error regenerating session:", regenErr);
             }
-            res.json({
-              message: "Sesión iniciada",
-              user: {
-                id: user.id,
-                email: user.email,
-                username: user.username,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                avatarUrl: user.avatarUrl,
-                mfaEnabled: user.mfaEnabled,
-              },
+            // Restore passport user
+            (req.session as any).passport = (sessionData as any).passport;
+            req.session.save((saveErr) => {
+              if (saveErr) {
+                console.error("[auth] Error saving session:", saveErr);
+              }
+              res.json({
+                message: "Sesión iniciada",
+                user: {
+                  id: user.id,
+                  email: user.email,
+                  username: user.username,
+                  firstName: user.firstName,
+                  lastName: user.lastName,
+                  avatarUrl: user.avatarUrl,
+                  mfaEnabled: user.mfaEnabled,
+                },
+              });
             });
           });
         });
@@ -368,8 +381,7 @@ export async function registerRoutes(
           req.session.save((saveErr) => {
             if (saveErr) console.error("[auth] Error saving session:", saveErr);
             const qrEncoded = encodeURIComponent(mfaQrCode);
-            const secretEncoded = encodeURIComponent(user.mfaSecret);
-            res.redirect(`/?google_auth=mfa_required&userId=${user.id}&qrCode=${qrEncoded}&secret=${secretEncoded}`);
+            res.redirect(`/?google_auth=mfa_required&userId=${user.id}&qrCode=${qrEncoded}`);
           });
         } else {
           // Existing user with MFA already set up - check if MFA is enabled
@@ -591,7 +603,7 @@ export async function registerRoutes(
       return res.status(400).json({ message: "Primero inicia la configuración de MFA" });
     }
 
-    if (!verifyMfaToken(token, secret)) {
+    if (!(await verifyMfaToken(token, secret))) {
       return res.status(400).json({ message: "Código inválido" });
     }
 
@@ -617,7 +629,7 @@ export async function registerRoutes(
 
     // Verify current token before disabling
     const [dbUser] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
-    if (!dbUser?.mfaSecret || !verifyMfaToken(token, dbUser.mfaSecret)) {
+    if (!dbUser?.mfaSecret || !(await verifyMfaToken(token, dbUser.mfaSecret))) {
       return res.status(400).json({ message: "Código inválido" });
     }
 
@@ -641,13 +653,14 @@ export async function registerRoutes(
     if (categoryId) conditions.push(eq(resources.categoryId, parseInt(categoryId as string)));
     if (careerId) conditions.push(eq(resources.careerId, parseInt(careerId as string)));
     if (search) {
+      const safeSearch = escapeLike(search as string);
       conditions.push(
         or(
-          ilike(resources.title, `%${search}%`),
-          ilike(resources.description, `%${search}%`),
-          ilike(resources.author, `%${search}%`),
-          ilike(resources.isbn, `%${search}%`),
-          ilike(resources.publisher, `%${search}%`)
+          ilike(resources.title, `%${safeSearch}%`),
+          ilike(resources.description, `%${safeSearch}%`),
+          ilike(resources.author, `%${safeSearch}%`),
+          ilike(resources.isbn, `%${safeSearch}%`),
+          ilike(resources.publisher, `%${safeSearch}%`)
         ) as any
       );
     }
@@ -808,8 +821,8 @@ export async function registerRoutes(
       res.setHeader("X-Frame-Options", "SAMEORIGIN");
       res.setHeader("Content-Security-Policy", "frame-ancestors 'self'");
       
-      // CORS headers - use same-origin since we proxy through our server
-      res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
+      // CORS headers - same-origin only
+      res.setHeader("Access-Control-Allow-Origin", process.env.APP_URL || req.headers.origin || "*");
       
       if (resource.storageType === "s3") {
         const { getFileStreamFromS3 } = await import("./s3");
@@ -847,8 +860,12 @@ export async function registerRoutes(
   });
 
   // Download resource file
-  app.get("/api/resources/:id/download", async (req, res) => {
+  app.get("/api/resources/:id/download", isAuthenticated, async (req, res) => {
     const { id } = req.params;
+    const resourceId = parseInt(id);
+    if (isNaN(resourceId)) {
+      return res.status(400).json({ message: "ID inválido" });
+    }
     const userId = (req.user as any)?.id;
 
     const [resource] = await db
@@ -861,14 +878,19 @@ export async function registerRoutes(
         fileStorageType: files.storageType,
         fileName: files.originalName,
         fileMimeType: files.mimeType,
+        isApproved: resources.isApproved,
       })
       .from(resources)
       .leftJoin(files, eq(resources.fileId, files.id))
-      .where(eq(resources.id, parseInt(id)))
+      .where(eq(resources.id, resourceId))
       .limit(1);
 
     if (!resource || !resource.fileId) {
       return res.status(404).json({ message: "Archivo no encontrado" });
+    }
+
+    if (!resource.isApproved) {
+      return res.status(403).json({ message: "Recurso pendiente de aprobación" });
     }
 
     // Track download
@@ -921,6 +943,16 @@ export async function registerRoutes(
         fileId = fileRecord.id;
       }
 
+      // Sanitize external URL
+      let sanitizedExternalUrl = null;
+      if (data.externalUrl) {
+        const { sanitizeUrl } = await import("./utils/sanitize");
+        sanitizedExternalUrl = sanitizeUrl(data.externalUrl);
+        if (!sanitizedExternalUrl) {
+          return res.status(400).json({ message: "URL externa inválida" });
+        }
+      }
+
       const [resource] = await db
         .insert(resources)
         .values({
@@ -939,7 +971,7 @@ export async function registerRoutes(
           pages: data.pages,
           keywords: data.keywords,
           fileId,
-          externalUrl: data.externalUrl,
+          externalUrl: sanitizedExternalUrl,
           uploadedBy: user.id,
           isPublic: true,
           isApproved: false, // Requires approval
@@ -986,7 +1018,14 @@ export async function registerRoutes(
     if (publisher !== undefined) allowedUpdates.publisher = sanitizeTextWithLimit(publisher, 255);
     if (language !== undefined) allowedUpdates.language = language;
     if (keywords !== undefined) allowedUpdates.keywords = keywords;
-    if (externalUrl !== undefined) allowedUpdates.externalUrl = externalUrl;
+    if (externalUrl !== undefined) {
+      const { sanitizeUrl } = await import("./utils/sanitize");
+      const cleanUrl = sanitizeUrl(externalUrl);
+      if (externalUrl && !cleanUrl) {
+        return res.status(400).json({ message: "URL externa inválida" });
+      }
+      allowedUpdates.externalUrl = cleanUrl;
+    }
 
     const [updated] = await db
       .update(resources)
@@ -1226,7 +1265,7 @@ export async function registerRoutes(
   });
 
   // Get download URL for S3 file
-  app.get("/api/files/:id/download-url", async (req, res) => {
+  app.get("/api/files/:id/download-url", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
       const userId = (req.user as any)?.id;
@@ -1286,13 +1325,14 @@ export async function registerRoutes(
       const conditions = [eq(resources.isApproved, true)];
       
       // Text search using ILIKE for now (can upgrade to FTS later)
+      const safeQuery = escapeLike(input.query);
       conditions.push(
         or(
-          ilike(resources.title, `%${input.query}%`),
-          ilike(resources.description, `%${input.query}%`),
-          ilike(resources.author, `%${input.query}%`),
-          ilike(resources.isbn, `%${input.query}%`),
-          ilike(resources.publisher, `%${input.query}%`)
+          ilike(resources.title, `%${safeQuery}%`),
+          ilike(resources.description, `%${safeQuery}%`),
+          ilike(resources.author, `%${safeQuery}%`),
+          ilike(resources.isbn, `%${safeQuery}%`),
+          ilike(resources.publisher, `%${safeQuery}%`)
         )!
       );
 
@@ -1522,10 +1562,10 @@ export async function registerRoutes(
       return res.status(404).json({ message: "Tema no encontrado" });
     }
 
-    // Increment view count
+    // Increment view count (atomic)
     await db
       .update(forumThreads)
-      .set({ viewCount: thread.viewCount + 1 })
+      .set({ viewCount: sql`${forumThreads.viewCount} + 1` })
       .where(eq(forumThreads.id, thread.id));
 
     // Get posts
