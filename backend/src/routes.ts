@@ -326,11 +326,19 @@ export async function registerRoutes(
     scope: ["profile", "email"],
   }));
 
-  app.get("/api/auth/google/callback",
-    passport.authenticate("google", { failureRedirect: "/login?error=google_auth_failed" }),
-    async (req, res) => {
+  app.get("/api/auth/google/callback", (req, res, next) => {
+    passport.authenticate("google", async (err: any, user: any, info: any) => {
       try {
-        const user = req.user as any;
+        if (err) {
+          console.error("[auth] Google OAuth error:", err);
+          return res.redirect("/login?error=google_auth_failed");
+        }
+
+        if (!user) {
+          console.log("[auth] Google OAuth: no user returned.", info?.message || info);
+          return res.redirect("/login?error=google_auth_failed");
+        }
+
         console.log("[auth] Usuario autenticado vía Google:", user.email);
 
         // Check if this is a new user requiring MFA setup
@@ -344,31 +352,43 @@ export async function registerRoutes(
           (req.session as any).pendingMfaSecret = user.mfaSecret;
           (req.session as any).pendingMfaUserId = user.id;
 
-          // Redirect to frontend with MFA setup needed
-          const qrEncoded = encodeURIComponent(mfaQrCode);
-          const secretEncoded = encodeURIComponent(user.mfaSecret);
-          res.redirect(`/?google_auth=mfa_required&userId=${user.id}&qrCode=${qrEncoded}&secret=${secretEncoded}`);
-        } else {
-          // Existing user, log them in
-          req.logIn(user, async (loginErr) => {
-            if (loginErr) {
-              console.error("[auth] Error logging in Google user:", loginErr);
-              return res.redirect("/login?error=login_failed");
-            }
-
-            await updateLastLogin(user.id);
-            await logAudit(user.id, "login_oauth", "user", user.id, null, null, req);
-
-            // Redirect to home with success
-            res.redirect(`/?google_auth=success&userId=${user.id}`);
+          req.session.save((saveErr) => {
+            if (saveErr) console.error("[auth] Error saving session:", saveErr);
+            const qrEncoded = encodeURIComponent(mfaQrCode);
+            const secretEncoded = encodeURIComponent(user.mfaSecret);
+            res.redirect(`/?google_auth=mfa_required&userId=${user.id}&qrCode=${qrEncoded}&secret=${secretEncoded}`);
           });
+        } else {
+          // Existing user with MFA already set up - check if MFA is enabled
+          if (user.mfaEnabled) {
+            // Store userId in session for MFA verification step
+            (req.session as any).pendingMfaUserId = user.id;
+            (req.session as any).pendingOAuthLogin = true;
+            req.session.save((saveErr) => {
+              if (saveErr) console.error("[auth] Error saving session:", saveErr);
+              res.redirect(`/login?google_auth=mfa_required&userId=${user.id}`);
+            });
+          } else {
+            // No MFA, log them in directly
+            req.logIn(user, async (loginErr) => {
+              if (loginErr) {
+                console.error("[auth] Error logging in Google user:", loginErr);
+                return res.redirect("/login?error=login_failed");
+              }
+
+              await updateLastLogin(user.id);
+              await logAudit(user.id, "login_oauth", "user", user.id, null, null, req);
+
+              res.redirect("/");
+            });
+          }
         }
       } catch (error) {
         console.error("[auth] Error en callback de Google:", error);
         res.redirect("/login?error=callback_error");
       }
-    }
-  );
+    })(req, res, next);
+  });
 
   // Get current user
   app.get("/api/auth/me", isAuthenticated, (req, res) => {
