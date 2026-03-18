@@ -1,5 +1,5 @@
 import { build as esbuild } from "esbuild";
-import { build as viteBuild } from "vite";
+import { execSync } from "child_process";
 import { rm, readFile, copyFile } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
@@ -28,8 +28,9 @@ const allowlist = [
 async function buildAll() {
   await rm("dist", { recursive: true, force: true });
 
-  // Copy index.html to frontend root for Vite build (expects it at root dir)
   const frontendDir = path.resolve("frontend");
+
+  // Copy index.html to frontend root for Vite build (expects it at root dir)
   const srcHtml = path.join(frontendDir, "public", "index.html");
   const destHtml = path.join(frontendDir, "index.html");
   if (existsSync(srcHtml) && !existsSync(destHtml)) {
@@ -37,17 +38,8 @@ async function buildAll() {
   }
 
   console.log("building client...");
-  await viteBuild({
-    configFile: path.resolve("frontend", "vite.config.ts"),
-    css: {
-      postcss: {
-        plugins: [
-          (await import("tailwindcss")).default({ config: path.resolve("frontend", "tailwind.config.cjs") }),
-          (await import("autoprefixer")).default(),
-        ],
-      },
-    },
-  });
+  // Run frontend's own Vite build from its directory, using its own deps
+  execSync("npm run build", { cwd: frontendDir, stdio: "inherit" });
 
   console.log("building server...");
   const pkg = JSON.parse(await readFile("package.json", "utf-8"));

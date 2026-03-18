@@ -1,29 +1,10 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
 import fs from "fs";
-// import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-let baseDir: string;
-// Detect if running from frontend/ or project root
-if (fs.existsSync(path.resolve(process.cwd(), "frontend", "src", "App.tsx"))) {
-  // Running from project root (build script or Render)
-  baseDir = path.resolve(process.cwd(), "frontend");
-} else if (fs.existsSync(path.resolve(process.cwd(), "src", "App.tsx"))) {
-  // Running from frontend/ directly
-  baseDir = process.cwd();
-} else {
-  // Fallback: try __dirname or import.meta.url
-  try {
-    baseDir = typeof __dirname !== "undefined"
-      ? __dirname
-      : dirname(fileURLToPath(import.meta.url));
-  } catch {
-    baseDir = path.resolve(process.cwd(), "frontend");
-  }
-}
+// When running from frontend/ dir, __dirname works; otherwise use cwd detection
+const baseDir = path.resolve(__dirname);
 
 // HTTPS configuration for development
 const certPath = path.resolve(baseDir, "..", "certs");
