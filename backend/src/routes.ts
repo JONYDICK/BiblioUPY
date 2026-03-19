@@ -90,6 +90,21 @@ export async function registerRoutes(
   // AUTH ROUTES
   // ============================================================================
 
+  // Temporary: Frontend error reporting (for debugging blank page on Render)
+  let lastFrontendError: { message: string; stack: string; timestamp: string } | null = null;
+  app.post("/api/debug/error", (req, res) => {
+    lastFrontendError = {
+      message: String(req.body?.message || "unknown"),
+      stack: String(req.body?.stack || ""),
+      timestamp: new Date().toISOString(),
+    };
+    console.error("[FRONTEND ERROR]", lastFrontendError);
+    res.json({ ok: true });
+  });
+  app.get("/api/debug/error", (_req, res) => {
+    res.json(lastFrontendError || { message: "No errors reported" });
+  });
+
   // Register
   app.post("/api/auth/register", registerLimiter, async (req, res) => {
     try {

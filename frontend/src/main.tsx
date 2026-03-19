@@ -3,6 +3,19 @@ import { Component, type ReactNode, type ErrorInfo } from "react";
 import App from "./App";
 import "./index.css";
 
+// Report error to backend for debugging
+function reportError(message: string, stack: string) {
+  try {
+    fetch("/api/debug/error", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, stack }),
+    }).catch(() => {});
+  } catch {
+    // ignore
+  }
+}
+
 // Global error boundary to catch React errors
 class ErrorBoundary extends Component<
   { children: ReactNode },
@@ -19,6 +32,7 @@ class ErrorBoundary extends Component<
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("[ErrorBoundary]", error, errorInfo);
+    reportError(error.message, error.stack || String(errorInfo.componentStack));
   }
 
   render() {
@@ -40,6 +54,7 @@ class ErrorBoundary extends Component<
 
 // Global JS error handler
 window.onerror = (msg, src, line, col, err) => {
+  reportError(String(msg), err?.stack || `${src}:${line}:${col}`);
   const el = document.getElementById("root");
   if (el && !el.hasChildNodes()) {
     el.innerHTML = `<div style="padding:2rem;font-family:monospace;color:#c00">
@@ -51,6 +66,7 @@ window.onerror = (msg, src, line, col, err) => {
 
 window.addEventListener("unhandledrejection", (e) => {
   console.error("[unhandledrejection]", e.reason);
+  reportError("unhandledrejection", String(e.reason));
 });
 
 createRoot(document.getElementById("root")!).render(
