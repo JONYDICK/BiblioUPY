@@ -989,7 +989,7 @@ export async function registerRoutes(
           externalUrl: sanitizedExternalUrl,
           uploadedBy: user.id,
           isPublic: true,
-          isApproved: false, // Requires approval
+          isApproved: true, // Auto-approve (no admin panel yet)
         })
         .returning();
 
@@ -1266,7 +1266,7 @@ export async function registerRoutes(
           fileId: fileRecord.id,
           uploadedBy: user.id,
           isPublic: true,
-          isApproved: false, // Requires admin approval
+          isApproved: true, // Auto-approve (no admin panel yet)
         })
         .returning();
 
