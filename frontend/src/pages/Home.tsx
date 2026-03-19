@@ -108,7 +108,8 @@ export default function Home() {
   const totalResources = resourcesData?.total || 0;
   const resources = resourcesData?.resources || [];
 
-  // Resources are already filtered by the API - use them directly\n  const filteredResources = resources;
+  // Resources are already filtered by the API - use them directly
+  const filteredResources = resources;
 
   // Get count for a type
   const getTypeCount = (type: string) => {
