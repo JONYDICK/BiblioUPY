@@ -30,7 +30,7 @@ const prodCSP = {
     styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
     fontSrc: ["'self'", "https://fonts.gstatic.com"],
     imgSrc: ["'self'", "data:", "blob:", "https:"],
-    connectSrc: ["'self'", "wss:", "https://cdnjs.cloudflare.com"],
+    connectSrc: ["'self'", "wss:", "blob:", "https://cdnjs.cloudflare.com"],
     frameSrc: ["'none'"],
     objectSrc: ["'none'"],
     mediaSrc: ["'self'", "blob:"],

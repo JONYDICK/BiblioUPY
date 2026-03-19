@@ -109,7 +109,7 @@ export function ResourceCard({ resource, index }: ResourceCardProps) {
             {/* Description */}
             {resource.description && (
               <p className="text-gray-500 text-sm mb-4 line-clamp-2 leading-relaxed">
-                {new DOMParser().parseFromString(resource.description, "text/html").body.textContent?.substring(0, 120) || ""}
+                {resource.description.replace(/<[^>]*>/g, "").substring(0, 120)}
                 {resource.description.length > 120 ? "..." : ""}
               </p>
             )}
